@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>期权风险计算学习手册</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { 
+    font-family: -apple-system, system-ui, sans-serif; 
+    background: #0f0f1a; color: #e4e4e7; line-height: 1.7; 
+    padding: 20px; max-width: 900px; margin: 0 auto;
+  }
+  h1 { font-size: 22px; font-weight: 500; margin-bottom: 8px; color: #fbbf24; }
+  h2 { font-size: 18px; font-weight: 500; margin-top: 40px; margin-bottom: 12px; color: #5DCAA5; border-bottom: 1px solid #2a2a3e; padding-bottom: 6px; }
+  h3 { font-size: 15px; font-weight: 500; margin-top: 24px; margin-bottom: 8px; color: #85B7EB; }
+  p { font-size: 14px; margin-bottom: 10px; color: #d4d4d8; }
+  .formula { 
+    background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 8px; 
+    padding: 12px 16px; margin: 12px 0; font-family: 'SF Mono', monospace; 
+    font-size: 13px; color: #fbbf24; overflow-x: auto;
+  }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+  th { background: #1a1a2e; color: #a1a1aa; padding: 8px 12px; text-align: left; font-weight: 500; border: 1px solid #2a2a3e; }
+  td { padding: 8px 12px; border: 1px solid #2a2a3e; color: #d4d4d8; }
+  td.num { text-align: right; font-family: monospace; }
+  td.profit { color: #ef4444; }
+  td.loss { color: #22c55e; }
+  .example-box { 
+    background: #111827; border: 1px solid #1e3a5f; border-radius: 8px; 
+    padding: 16px; margin: 16px 0;
+  }
+  .example-box .label { color: #378ADD; font-size: 12px; font-weight: 500; margin-bottom: 8px; }
+  .step { 
+    background: #1a1a2e; border-left: 3px solid #5DCAA5; 
+    padding: 10px 16px; margin: 8px 0; font-size: 13px;
+  }
+  .step .num { color: #5DCAA5; font-weight: 500; }
+  .practice { 
+    background: #1a1020; border: 1px solid #4a1b3c; border-radius: 8px; 
+    padding: 16px; margin: 16px 0;
+  }
+  .practice .label { color: #D4537E; font-size: 12px; font-weight: 500; margin-bottom: 8px; }
+  .answer { 
+    background: #0d1a0d; border: 1px solid #1D9E75; border-radius: 8px; 
+    padding: 12px 16px; margin: 8px 0; font-size: 13px; color: #9FE1CB;
+    display: none; margin-top: 12px;
+  }
+  .answer.show { display: block; }
+  .btn { 
+    background: #1D9E75; color: #fff; border: none; padding: 6px 16px; 
+    border-radius: 6px; cursor: pointer; font-size: 13px; margin-top: 8px;
+  }
+  .btn:hover { background: #0F6E56; }
+  .summary-table td { font-size: 12px; }
+  .highlight { color: #fbbf24; font-weight: 500; }
+  .red { color: #ef4444; }
+  .green { color: #22c55e; }
+  .blue { color: #378ADD; }
+  .note { font-size: 12px; color: #71717a; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<h1>期权风险计算学习手册</h1>
+<p style="color:#a1a1aa; font-size:13px;">从裸买到铁鹰 · 五步法算清任何策略的最大亏损</p>
+
+<h2>第一部分：通用五步法</h2>
+<p>不管你做什么策略，风险计算永远是这五步：</p>
+
+<div class="formula">
+步骤1: 列出所有腿 (买/卖, Call/Put, 行权价, 权利金)<br>
+步骤2: 算净成本 = 买入付出 - 卖出收入 (正数=你花钱, 负数=你收钱)<br>
+步骤3: 找"最惨场景"——标的价格到哪个位置你亏最多?<br>
+步骤4: 在最惨价格下, 算每腿的到期内在价值<br>
+步骤5: 最大亏损 = 净成本 + Σ(每腿到期盈亏)
+</div>
+
+<div class="example-box">
+<div class="label">两个核心公式 (到期日时间价值=0)</div>
+<div class="formula" style="margin:8px 0;">
+Call 内在价值 = max(标的价格 - 行权价, 0)<br>
+Put  内在价值 = max(行权价 - 标的价格, 0)<br><br>
+买入腿到期盈亏 = +内在价值 - 权利金  (你花了钱买, 到期收回内在价值)<br>
+卖出腿到期盈亏 = -内在价值 + 权利金  (你收了钱卖, 到期要付出内在价值)
+</div>
+</div>
+
+<h2>第二部分：单腿策略</h2>
+
+<h3>策略1: 裸买 Call (Long Call)</h3>
+<p>你的实盘案例: LC2609P168000 是裸买 Put, 逻辑完全一样, 换方向即可。</p>
+
+<div class="example-box">
+<div class="label">案例: 买入 SR609C5300, 权利金 65.68, 10吨/手</div>
+<div class="step"><span class="num">步骤1</span> 一条腿: 买入 Call, 行权价 5300, 权利金 65.68</div>
+<div class="step"><span class="num">步骤2</span> 净成本 = 65.68 (你花钱买了)</div>
+<div class="step"><span class="num">步骤3</span> 最惨场景: SR 到期 ≤ 5300, Call 内在价值 = 0, 你一分钱都收不回来</div>
+<div class="step"><span class="num">步骤4</span> 在 SR=5300 时: Call内在 = max(5300-5300,0) = 0</div>
+<div class="step"><span class="num">步骤5</span> <span class="highlight">最大亏损 = 65.68/吨 (全部权利金归零)</span><br>
+总亏损 = 65.68 × 10吨 × 1手 = 656.8 元/手</div>
+</div>
+
+<div class="practice">
+<div class="label">练习1: 裸买 Put</div>
+<p>买入 LC2609P168000, 权利金 11,005, 合约单位 1吨/手, 6张。<br>
+问: 最大亏损是多少? 在什么标的价格下发生?</p>
+<button class="btn" onclick="document.getElementById('a1').classList.toggle('show')">查看答案</button>
+<div class="answer" id="a1">
+步骤1: 买入 Put, 行权价 168,000, 权利金 11,005<br>
+步骤2: 净成本 = 11,005<br>
+步骤3: 最惨场景 = LC 到期 ≥ 168,000, Put 内在价值 = 0<br>
+步骤4: 在 LC=168,000 时, Put内在 = max(168000-168000,0) = 0<br>
+步骤5: <span class="highlight">最大亏损 = 11,005/吨 × 1吨 × 6张 = 66,030 元</span><br>
+这就是你之前那笔裸买沽的最大风险——全部权利金归零。
+</div>
+</div>
+
+<h3>策略2: 裸卖 Call (Short Call) — 无限风险</h3>
+<div class="example-box">
+<div class="label">案例: 卖出 SR609C5400, 收权利金 38.83</div>
+<div class="step"><span class="num">步骤1</span> 一条腿: 卖出 Call, 行权价 5400, 权利金 38.83</div>
+<div class="step"><span class="num">步骤2</span> 净收入 = 38.83 (你收钱了, 净成本 = -38.83)</div>
+<div class="step"><span class="num">步骤3</span> 最惨场景: SR 涨到无穷大 → Call内在 = ∞</div>
+<div class="step"><span class="num">步骤4</span> 标的每涨1点, 你亏1点 (delta接近1)</div>
+<div class="step"><span class="num">步骤5</span> <span class="red">最大亏损 = 无限</span><br>
+这就是为什么不能裸卖 Call —— 标的可以无限涨, 你的亏损没有上限。</div>
+</div>
+
+<h3>策略3: 裸卖 Put (Short Put) — 有限但很大</h3>
+<div class="example-box">
+<div class="label">案例: 卖出 SR609P5200, 收权利金 20</div>
+<div class="step"><span class="num">步骤1</span> 一条腿: 卖出 Put, 行权价 5200, 权利金 20</div>
+<div class="step"><span class="num">步骤2</span> 净收入 = 20 (净成本 = -20)</div>
+<div class="step"><span class="num">步骤3</span> 最惨场景: SR 跌到 0, Put内在 = 5200-0 = 5200</div>
+<div class="step"><span class="num">步骤4</span> 在 SR=0 时, 你要赔 5200/吨</div>
+<div class="step"><span class="num">步骤5</span> <span class="highlight">最大亏损 = 5200 - 20 = 5180/吨</span><br>
+总亏损 = 5180 × 10 × 1 = 51,800 元/手</div>
+<p class="note">注意: 裸卖Put的最大亏损 = 行权价 - 权利金。不是无限, 但可以非常大。</p>
+</div>
+
+<h2>第三部分：垂直价差 (你做的主要策略)</h2>
+
+<h3>策略4: 牛市看涨价差 (Bull Call Spread)</h3>
+<p>你的实盘案例: LH2609 C12400买 / C13000卖, SR609 C5300买 / C5400卖, SA609 C1100买 / C1160卖</p>
+
+<div class="example-box">
+<div class="label">案例: SR609 买C5300(65.68) / 卖C5400(38.83), 各6张, 10吨/手</div>
+<div class="step"><span class="num">步骤1</span> 腿1: 买入 Call 5300, 付出 65.68<br>
+腿2: 卖出 Call 5400, 收入 38.83</div>
+<div class="step"><span class="num">步骤2</span> 净成本 = 65.68 - 38.83 = <span class="highlight">26.85/吨</span></div>
+<div class="step"><span class="num">步骤3</span> 最惨场景: SR ≤ 5300 时, 两个Call都是虚值, 内在价值都=0</div>
+<div class="step"><span class="num">步骤4</span> 在 SR=5300 时:<br>
+买C5300内在 = max(5300-5300, 0) = 0<br>
+卖C5400内在 = max(5300-5400, 0) = 0<br>
+两腿到期价值都=0</div>
+<div class="step"><span class="num">步骤5</span> <span class="highlight">最大亏损 = 净成本 26.85/吨 (两腿都归零, 亏全部净权利金)</span><br>
+总亏损 = 26.85 × 10 × 6 = <span class="red">1,611 元</span></div>
+<p class="note">牛差的关键: 卖购不是白卖的——它收了38.83, 降低了你的净成本。如果没有卖购, 你裸买5300C要花65.68; 加了卖购只花26.85。亏损上限从65.68降到了26.85。</p>
+</div>
+
+<div class="practice">
+<div class="label">练习2: 算你自己的 LH2609 牛差</div>
+<p>买入 LH2609C12400, 权利金 415; 卖出 LH2609C13000, 权利金 215.5; 各5张, 16吨/手。<br>
+问: 最大亏损是多少? 最大盈利是多少? 盈亏平衡点在哪?</p>
+<button class="btn" onclick="document.getElementById('a2').classList.toggle('show')">查看答案</button>
+<div class="answer" id="a2">
+<b>最大亏损:</b><br>
+净成本 = 415 - 215.5 = 199.5/吨<br>
+最惨场景: LH ≤ 12400, 两腿都虚值归零<br>
+最大亏损 = 199.5 × 16 × 5 = <span class="red">15,960 元</span><br><br>
+<b>最大盈利:</b><br>
+最佳场景: LH ≥ 13000, 差宽 = 13000-12400 = 600<br>
+组合到期价值 = 600/吨<br>
+最大盈利 = (600 - 199.5) × 16 × 5 = <span class="green">32,040 元</span><br><br>
+<b>盈亏平衡:</b><br>
+= 买购行权价 + 净成本 = 12400 + 199.5 = <span class="highlight">12,599.5</span>
+</div>
+</div>
+
+<h3>策略5: 牛市看跌价差 (Bull Put Spread) — 收权利金版</h3>
+<p>卖出高行权价Put + 买入低行权价Put。看多但用卖来表达。</p>
+
+<div class="example-box">
+<div class="label">案例: 卖出 SR609P5240(收20) / 买入 SR609P5180(付8), 各6张</div>
+<div class="step"><span class="num">步骤1</span> 腿1: 卖出 Put 5240, 收入 20<br>
+腿2: 买入 Put 5180, 付出 8</div>
+<div class="step"><span class="num">步骤2</span> 净收入 = 20 - 8 = <span class="highlight">12/吨</span> (净成本 = -12, 你收钱了)</div>
+<div class="step"><span class="num">步骤3</span> 最惨场景: SR ≤ 5180, 两个Put都是实值<br>
+卖Put5240 亏: 5240-SR<br>
+买Put5180 赚: 5180-SR<br>
+净亏: (5240-SR) - (5180-SR) = 5240-5180 = 60 (差宽, 固定不变)</div>
+<div class="step"><span class="num">步骤4</span> 在 SR=5180 时:<br>
+卖Put5240内在 = 5240-5180 = 60 (你赔60)<br>
+买Put5180内在 = 5180-5180 = 0 (没用上)<br>
+总到期支出 = 60</div>
+<div class="step"><span class="num">步骤5</span> <span class="highlight">最大亏损 = 差宽 - 净收入 = 60 - 12 = 48/吨</span><br>
+总亏损 = 48 × 10 × 6 = <span class="red">2,880 元</span><br><br>
+最大盈利 = 净收入 = 12 × 10 × 6 = <span class="green">720 元</span> (SR≥5240时两腿归零, 白赚权利金)<br>
+盈亏平衡 = 卖Put行权价 - 净收入 = 5240 - 12 = <span class="highlight">5228</span></div>
+<p class="note">规律: 收权利金的价差, 最大亏损 = 差宽 - 净收入; 最大盈利 = 净收入。跟花权利金的价差正好相反。</p>
+</div>
+
+<div class="practice">
+<div class="label">练习3: 验证规律</div>
+<p>上面的牛差(花权利金版): 差宽=100, 净成本=26.85<br>
+最大亏损 = 净成本 = 26.85 ✓<br>
+最大盈利 = 差宽 - 净成本 = 100 - 26.85 = 73.15 ✓<br><br>
+上面的牛差(收权利金版): 差宽=60, 净收入=12<br>
+最大亏损 = 差宽 - 净收入 = 48 ✓<br>
+最大盈利 = 净收入 = 12 ✓<br><br>
+<span class="highlight">两种版本的盈亏平衡都是同一个公式: 盈亏平衡 = 低行权价 + 净成本 (花权利金版) 或 高行权价 - 净收入 (收权利金版), 算出来结果一样。</span></p>
+</div>
+
+<h3>策略6: 熊市看跌价差 (Bear Put Spread)</h3>
+<p>你的实盘案例: LC2609 P168000买 / P156000卖 (裸买沽转熊差)</p>
+
+<div class="example-box">
+<div class="label">案例: 买入 LC2609P168000(付11005) / 卖出 LC2609P156000(收4720), 各6张, 1吨/手</div>
+<div class="step"><span class="num">步骤1</span> 腿1: 买入 Put 168000, 付出 11005<br>
+腿2: 卖出 Put 156000, 收入 4720</div>
+<div class="step"><span class="num">步骤2</span> 净成本 = 11005 - 4720 = <span class="highlight">6285/吨</span></div>
+<div class="step"><span class="num">步骤3</span> 最惨场景: LC ≥ 168000, 两个Put都虚值归零</div>
+<div class="step"><span class="num">步骤4</span> 在 LC=168000 时, 两腿内在都=0</div>
+<div class="step"><span class="num">步骤5</span> <span class="highlight">最大亏损 = 净成本 6285/吨</span><br>
+总亏损 = 6285 × 1 × 6 = <span class="red">37,710 元</span><br><br>
+最大盈利 = (168000-156000) - 6285 = 12000-6285 = 5715/吨<br>
+总盈利 = 5715 × 1 × 6 = <span class="green">34,290 元</span><br>
+盈亏平衡 = 168000 - 6285 = <span class="highlight">161,715</span></div>
+<p class="note">跟牛差完全对称: 净成本就是最大亏损, 差宽减净成本就是最大盈利。只是方向反了。</p>
+</div>
+
+<h3>策略7: 熊市看涨价差 (Bear Call Spread) — 收权利金版</h3>
+<div class="example-box">
+<div class="label">案例: 买入 SR609C5400(付38) / 卖出 SR609C5300(收65), 各6张</div>
+<div class="step"><span class="num">步骤2</span> 净收入 = 65 - 38 = 27/吨</div>
+<div class="step"><span class="num">步骤3</span> 最惨场景: SR ≥ 5400, 差宽=100全部赔出</div>
+<div class="step"><span class="num">步骤5</span> 最大亏损 = 差宽 - 净收入 = 100 - 27 = 73/吨 → 73 × 10 × 6 = 4,380元<br>
+最大盈利 = 净收入 = 27/吨 → 27 × 10 × 6 = 1,620元<br>
+盈亏平衡 = 5300 + 27 = 5327</div>
+<p class="note">注意: 这正好是牛差5300/5400的镜像。同一个行权价, 买/卖方向反过来, 盈亏就镜像翻转。</p>
+</div>
+
+<h2>第四部分：速查表</h2>
+
+<table class="summary-table">
+<tr><th>策略</th><th>结构</th><th>最大亏损</th><th>最大盈利</th><th>盈亏平衡</th></tr>
+<tr><td>裸买Call</td><td>买C</td><td>权利金</td><td>∞</td><td>行权价+权利金</td></tr>
+<tr><td>裸买Put</td><td>买P</td><td>权利金</td><td>行权价-权利金</td><td>行权价-权利金</td></tr>
+<tr><td>裸卖Call</td><td>卖C</td><td>∞</td><td>权利金</td><td>行权价+权利金</td></tr>
+<tr><td>裸卖Put</td><td>卖P</td><td>行权价-权利金</td><td>权利金</td><td>行权价-权利金</td></tr>
+<tr><td>牛差(花版)</td><td>买低C+卖高C</td><td><span class="red">净成本</span></td><td>差宽-净成本</td><td>低行权价+净成本</td></tr>
+<tr><td>牛差(收版)</td><td>卖高P+买低P</td><td><span class="red">差宽-净收入</span></td><td>净收入</td><td>高行权价-净收入</td></tr>
+<tr><td>熊差(花版)</td><td>买高P+卖低P</td><td><span class="red">净成本</span></td><td>差宽-净成本</td><td>高行权价-净成本</td></tr>
+<tr><td>熊差(收版)</td><td>买高C+卖低C</td><td><span class="red">差宽-净收入</span></td><td>净收入</td><td>低行权价+净收入</td></tr>
+</table>
+
+<h2>第五部分：多腿策略 (进阶)</h2>
+
+<h3>策略8: 铁鹰 (Iron Condor) — 四腿</h3>
+<div class="example-box">
+<div class="label">结构: 卖P_b + 买P_a (下方保护) + 卖C_c + 买C_d (上方保护)</div>
+<p>假设 SR609=5270, 做铁鹰:</p>
+<table>
+<tr><th>腿</th><th>操作</th><th>行权价</th><th>权利金</th></tr>
+<tr><td>1</td><td>卖出 Put</td><td>5200</td><td>收入 12</td></tr>
+<tr><td>2</td><td>买入 Put</td><td>5150</td><td>付出 5</td></tr>
+<tr><td>3</td><td>卖出 Call</td><td>5350</td><td>收入 10</td></tr>
+<tr><td>4</td><td>买入 Call</td><td>5400</td><td>付出 4</td></tr>
+</table>
+<div class="step"><span class="num">步骤2</span> 净收入 = (12+10) - (5+4) = <span class="highlight">13/吨</span></div>
+<div class="step"><span class="num">步骤3</span> 最惨场景有两个方向:<br>
+向下最惨: SR ≤ 5150, 下方Put价差全部赔出 = 5200-5150 = 50<br>
+向上最惨: SR ≥ 5400, 上方Call价差全部赔出 = 5400-5350 = 50<br>
+两边差宽都是50, 所以两个方向最大亏损一样</div>
+<div class="step"><span class="num">步骤5</span> <span class="highlight">最大亏损 = 差宽 - 净收入 = 50 - 13 = 37/吨</span><br>
+总亏损 = 37 × 10 × 1 = 370 元/手<br>
+最大盈利 = 净收入 = 13 × 10 = 130 元/手</div>
+<p class="note">铁鹰本质是两个收权利金价差拼在一起, 上下各一个。最大亏损取两边差宽的较大值减净收入。</p>
+</div>
+
+<h3>策略9: 跨式 (Straddle)</h3>
+<div class="example-box">
+<div class="label">买入跨式: 买C + 买P (同行权价)</div>
+<p>假设 SR609=5270, 买入 SR609C5300(65) + SR609P5300(60)</p>
+<div class="step"><span class="num">步骤2</span> 净成本 = 65 + 60 = 125/吨</div>
+<div class="step"><span class="num">步骤3</span> 最惨场景: SR 到期 = 5300, 两腿都正好ATM, 内在都=0</div>
+<div class="step"><span class="num">步骤5</span> <span class="highlight">最大亏损 = 净成本 125/吨</span> (标的正好停在行权价不动)<br>
+最大盈利 = 无限 (标的大涨或大跌都赚)<br>
+两个盈亏平衡: 5300±125 = 5175 和 5425</div>
+</div>
+
+<h2>第六部分：综合练习</h2>
+
+<div class="practice">
+<div class="label">练习4: 你自己的 50ETF 牛差</div>
+<p>买入 50ETF购7月2900, 成本 0.1484; 卖出 50ETF购7月3000, 收入 0.0705; 各150张, 合约单位10000。<br>
+请计算: 最大亏损、最大盈利、盈亏平衡、风险回报比。</p>
+<button class="btn" onclick="document.getElementById('a4').classList.toggle('show')">查看答案</button>
+<div class="answer" id="a4">
+净成本 = 0.1484 - 0.0705 = <span class="highlight">0.0779/份</span><br><br>
+<b>最大亏损</b> = 净成本 = 0.0779 × 10000 × 150 = <span class="red">116,850 元</span><br>
+(50ETF ≤ 2.900 时两腿归零)<br><br>
+<b>最大盈利</b> = 差宽 - 净成本 = (3.000-2.900) - 0.0779 = 0.0221 × 10000 × 150 = <span class="green">33,150 元</span><br>
+(50ETF ≥ 3.000 时差宽全部实现)<br><br>
+<b>盈亏平衡</b> = 2.900 + 0.0779 = <span class="highlight">2.9779</span><br><br>
+<b>风险回报比</b> = 116,850 : 33,150 = <span class="red">1 : 0.28</span><br>
+(这个赔率很差——冒着11.7万的风险只赚3.3万, 成本占差宽的78%)
+</div>
+</div>
+
+<div class="practice">
+<div class="label">练习5: 新策略 — 卖沽差</div>
+<p>假设你想在 SR609=5270 做一个卖沽差看多:<br>
+卖出 SR609P5240, 收权利金 20; 买入 SR609P5180, 付权利金 8; 各6张, 10吨/手。<br>
+请完整计算所有风险参数。</p>
+<button class="btn" onclick="document.getElementById('a5').classList.toggle('show')">查看答案</button>
+<div class="answer" id="a5">
+<b>步骤1-2:</b> 净收入 = 20 - 8 = 12/吨 (收权利金)<br><br>
+<b>步骤3:</b> 最惨场景 = SR ≤ 5180<br>
+卖P5240 赔 5240-SR, 买P5180 赚 5180-SR<br>
+净赔 = (5240-SR)-(5180-SR) = 60 (固定差宽)<br><br>
+<b>最大亏损</b> = 差宽 - 净收入 = 60 - 12 = 48/吨<br>
+总亏损 = 48 × 10 × 6 = <span class="red">2,880 元</span><br><br>
+<b>最大盈利</b> = 净收入 = 12 × 10 × 6 = <span class="green">720 元</span><br>
+(SR ≥ 5240 时两腿归零, 白赚权利金)<br><br>
+<b>盈亏平衡</b> = 5240 - 12 = <span class="highlight">5228</span><br><br>
+<b>风险回报比</b> = 2,880 : 720 = 1 : 0.25<br>
+(赔率不好, 但胜率高——SR只要不跌破5228就赚, 距现价5270有42点缓冲)
+</div>
+</div>
+
+<div class="practice">
+<div class="label">练习6: 挑战题 — 混合策略</div>
+<p>假设你做了一个"领口策略"(Collar):<br>
+持有 SR609 期货多单(5270开仓) + 买入 SR609P5200(权利金15) + 卖出 SR609C5400(权利金25)<br>
+1张期货(10吨) + 各1张期权<br>
+请计算: 最大亏损、最大盈利、盈亏平衡。</p>
+<button class="btn" onclick="document.getElementById('a6').classList.toggle('show')">查看答案</button>
+<div class="answer" id="a6">
+这是三腿策略, 但逻辑清晰:<br><br>
+<b>腿1 期货多单:</b> 盈亏 = SR - 5270 (涨赚跌亏)<br>
+<b>腿2 买Put 5200:</b> 到期价值 = max(5200-SR, 0) - 15 (花钱买的保护)<br>
+<b>腿3 卖Call 5400:</b> 到期价值 = 25 - max(SR-5400, 0) (收钱封顶)<br><br>
+<b>净期权现金流</b> = 25(收) - 15(付) = +10 (净收10)<br><br>
+<b>最惨场景: SR ≤ 5200</b><br>
+期货亏 = SR - 5270<br>
+Put赚 = 5200 - SR<br>
+Call归零<br>
+总盈亏 = (SR-5270) + (5200-SR) + 10 = -5270+5200+10 = <span class="red">-60/吨</span><br>
+最大亏损 = 60 × 10 = <span class="red">600 元</span><br>
+(不管SR跌到多少, 亏固定60——Put保护了下跌风险)<br><br>
+<b>最佳场景: SR ≥ 5400</b><br>
+期货赚 = SR - 5270<br>
+Put归零<br>
+Call亏 = -(SR - 5400)<br>
+总盈亏 = (SR-5270) + 0 + 25 - (SR-5400) = -5270+5400+25 = <span class="green">155/吨</span><br>
+最大盈利 = 155 × 10 = <span class="green">1,550 元</span><br>
+(不管SR涨到多少, 赚固定155——Call封了上涨空间)<br><br>
+<b>盈亏平衡</b> = 5270 - 10(净权利金收入) = <span class="highlight">5260</span><br>
+(净收了10块权利金, 所以盈亏平衡比期货开仓价低10点)<br><br>
+<span class="highlight">规律: 领口策略本质是"用放弃上涨空间换取下跌保护", 盈亏都被锁定, 像一个隐形的牛差。</span>
+</div>
+</div>
+
+<h2>总结：你必须记住的几条规律</h2>
+
+<table>
+<tr><th>策略类型</th><th>最大亏损公式</th><th>最大盈利公式</th></tr>
+<tr><td>花权利金的价差<br>(牛差花版/熊差花版)</td><td><span class="highlight">= 净成本</span><br>(标的没到目标, 两腿归零)</td><td>= 差宽 - 净成本<br>(标的到了, 差宽全部实现)</td></tr>
+<tr><td>收权利金的价差<br>(牛差收版/熊差收版/铁鹰)</td><td><span class="highlight">= 差宽 - 净收入</span><br>(标的穿过了保护行权价)</td><td>= 净收入<br>(标的在区间内, 两腿归零)</td></tr>
+<tr><td>裸买(任何)</td><td><span class="highlight">= 全部权利金</span><br>(标的没到你想要的方向)</td><td>看方向, 可能很大也可能有限</td></tr>
+<tr><td>裸卖Call</td><td><span class="red">= 无限</span></td><td>= 权利金</td></tr>
+<tr><td>裸卖Put</td><td><span class="highlight">= 行权价 - 权利金</span><br>(标的跌到0)</td><td>= 权利金</td></tr>
+</table>
+
+<p style="margin-top:30px; color:#71717a; font-size:12px; border-top:1px solid #2a2a3e; padding-top:16px;">
+这份手册的每个数字你都应该自己拿纸笔算一遍。算过一遍, 才是你的。看一遍不算。<br>
+最后一条忠告: 任何一笔新开仓, 如果你在纸上算不出最大亏损是多少, 就不要下单。
+</p>
+
+</body>
+</html>

@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>期权多腿策略风险计算器</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #0f0f1a;
+  color: #e4e4e7;
+  font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  padding: 20px;
+  min-height: 100vh;
+  line-height: 1.6;
+}
+.container { max-width: 1100px; margin: 0 auto; }
+h1 { font-size: 22px; margin-bottom: 2px; }
+.subtitle { color: #71717a; font-size: 13px; margin-bottom: 20px; }
+.card {
+  background: #1a1a2e;
+  border: 1px solid #2e2e3f;
+  border-radius: 8px;
+  padding: 18px;
+  margin-bottom: 14px;
+}
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #a1a1aa;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+.field { display: flex; flex-direction: column; gap: 3px; }
+.field label { font-size: 11px; color: #71717a; }
+.field select, .field input {
+  background: #111118;
+  border: 1px solid #2e2e3f;
+  border-radius: 4px;
+  color: #e4e4e7;
+  padding: 7px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.field select:focus, .field input:focus { border-color: #6366f1; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th {
+  text-align: left;
+  padding: 6px 8px;
+  color: #71717a;
+  font-weight: 500;
+  border-bottom: 1px solid #2e2e3f;
+  font-size: 12px;
+}
+td { padding: 5px 8px; border-bottom: 1px solid #1e1e2f; }
+td input, td select {
+  background: #111118;
+  border: 1px solid #2e2e3f;
+  border-radius: 4px;
+  color: #e4e4e7;
+  padding: 5px 7px;
+  font-size: 13px;
+  font-family: inherit;
+  width: 100%;
+  outline: none;
+}
+td input:focus, td select:focus { border-color: #6366f1; }
+.btn {
+  background: #6366f1;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 18px;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn:hover { background: #5558e0; }
+.btn-secondary {
+  background: #2e2e3f;
+  color: #e4e4e7;
+}
+.btn-secondary:hover { background: #3e3e4f; }
+.btn-danger {
+  background: transparent;
+  color: #ef4444;
+  border: 1px solid #ef4444;
+  border-radius: 3px;
+  padding: 3px 7px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btn-danger:hover { background: #ef4444; color: white; }
+.results {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+.result-card {
+  background: #111118;
+  border: 1px solid #2e2e3f;
+  border-radius: 6px;
+  padding: 12px;
+}
+.result-label { font-size: 11px; color: #71717a; margin-bottom: 3px; }
+.result-value { font-size: 18px; font-weight: 700; }
+.result-value.profit { color: #ef4444; }
+.result-value.loss { color: #22c55e; }
+.result-value.neutral { color: #e4e4e7; }
+.result-value.warning { color: #fbbf24; }
+.result-detail { font-size: 10px; color: #71717a; margin-top: 2px; }
+#chartCanvas { width: 100%; height: 380px; display: block; }
+.preset-bar { display: flex; gap: 6px; flex-wrap: wrap; }
+.preset-btn {
+  background: #1e1e2f;
+  border: 1px solid #2e2e3f;
+  color: #a1a1aa;
+  border-radius: 4px;
+  padding: 5px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+.preset-btn:hover { border-color: #6366f1; color: #e4e4e7; }
+.breakeven-list { display: flex; gap: 6px; flex-wrap: wrap; }
+.be-tag {
+  background: #1e1e2f;
+  border: 1px solid #fbbf24;
+  color: #fbbf24;
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 12px;
+}
+.warning {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid #ef4444;
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: #ef4444;
+  font-size: 12px;
+  margin-top: 10px;
+}
+.detail-table { width: 100%; font-size: 12px; margin-top: 10px; }
+.detail-table th { color: #71717a; font-weight: 500; font-size: 11px; }
+.detail-table td { padding: 4px 8px; }
+.legend {
+  display: flex;
+  gap: 16px;
+  font-size: 11px;
+  color: #71717a;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.legend-item { display: flex; align-items: center; gap: 4px; }
+.legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+.note {
+  font-size: 11px;
+  color: #52525b;
+  margin-top: 12px;
+  line-height: 1.5;
+}
+.formula-box {
+  background: #111118;
+  border: 1px solid #2e2e3f;
+  border-radius: 6px;
+  padding: 14px;
+  margin-top: 10px;
+  font-size: 12px;
+  line-height: 1.8;
+  color: #a1a1aa;
+}
+.formula-box code {
+  background: #1e1e2f;
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: #fbbf24;
+  font-size: 11px;
+}
+.formula-box strong { color: #e4e4e7; }
+.highlight-card {
+  background: #111118;
+  border: 2px solid #6366f1;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+.highlight-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid #1e1e2f;
+}
+.highlight-row:last-child { border-bottom: none; }
+.highlight-key { color: #a1a1aa; font-size: 13px; }
+.highlight-val { font-size: 16px; font-weight: 700; }
+.highlight-val.profit { color: #ef4444; }
+.highlight-val.loss { color: #22c55e; }
+.highlight-val.neutral { color: #e4e4e7; }
+.leg-detail-box {
+  background: #111118;
+  border: 1px solid #2e2e3f;
+  border-radius: 6px;
+  padding: 14px;
+  margin-top: 10px;
+  font-size: 12px;
+  line-height: 2;
+}
+.leg-detail-box .leg-line {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 0;
+}
+.leg-detail-box .leg-name { color: #a1a1aa; }
+.leg-detail-box .leg-amount { font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>期权多腿策略风险计算器</h1>
+  <p class="subtitle">支持任意腿数 · 不同张数 · ETF期权/商品期权通用 · 到期损益 + 当前市场盈亏</p>
+
+  <!-- 快速示例 -->
+  <div class="card">
+    <div class="section-title">快速示例（点击载入实盘数据）</div>
+    <div class="preset-bar">
+      <button class="preset-btn" onclick="loadExample('lh_bullcall')">LH2609 生猪牛差</button>
+      <button class="preset-btn" onclick="loadExample('sr_bullcall')">SR609 白糖牛差</button>
+      <button class="preset-btn" onclick="loadExample('sa_bullcall')">SA609 纯碱牛差</button>
+      <button class="preset-btn" onclick="loadExample('lc_bearput')">LC2609 碳酸锂熊差</button>
+      <button class="preset-btn" onclick="loadExample('etf_bullcall')">50ETF 7月牛差</button>
+    </div>
+  </div>
+
+  <!-- 策略预设 -->
+  <div class="card">
+    <div class="section-title">策略模板（自动填充腿结构）</div>
+    <div class="preset-bar">
+      <button class="preset-btn" onclick="loadPreset('bullcall')">牛市看涨价差</button>
+      <button class="preset-btn" onclick="loadPreset('bearput')">熊市看跌价差</button>
+      <button class="preset-btn" onclick="loadPreset('straddle')">买入跨式</button>
+      <button class="preset-btn" onclick="loadPreset('strangle')">买入宽跨式</button>
+      <button class="preset-btn" onclick="loadPreset('ironcondor')">铁鹰</button>
+      <button class="preset-btn" onclick="loadPreset('butterfly')">蝶式</button>
+      <button class="preset-btn" onclick="loadPreset('collar')">领口</button>
+      <button class="preset-btn" onclick="loadPreset('custom')">自定义（清空）</button>
+    </div>
+  </div>
+
+  <!-- 合约设置 -->
+  <div class="card">
+    <div class="section-title">合约设置</div>
+    <div class="row">
+      <div class="field">
+        <label>合约类型</label>
+        <select id="contractType" onchange="onContractChange()">
+          <option value="etf">ETF期权 (50ETF/300ETF等)</option>
+          <option value="lh">生猪 LH (16吨/手)</option>
+          <option value="sr">白糖 SR (10吨/手)</option>
+          <option value="sa">纯碱 SA (20吨/手)</option>
+          <option value="lc">碳酸锂 LC (1吨/手)</option>
+          <option value="rb">螺纹钢 RB (10吨/手)</option>
+          <option value="cu">铜 CU (5吨/手)</option>
+          <option value="ru">橡胶 RU (10吨/手)</option>
+          <option value="cf">棉花 CF (5吨/手)</option>
+          <option value="ta">PTA TA (5吨/手)</option>
+          <option value="ma">甲醇 MA (10吨/手)</option>
+          <option value="pg">液化石油气 PG (20吨/手)</option>
+          <option value="custom">自定义乘数</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>合约乘数</label>
+        <input type="number" id="multiplier" value="10000" min="1" style="width:90px" onchange="calculate()">
+      </div>
+      <div class="field">
+        <label>标的现价（可选）</label>
+        <input type="number" id="currentPrice" value="" placeholder="如 3.005" step="any" style="width:120px" onchange="calculate()">
+      </div>
+    </div>
+  </div>
+
+  <!-- 持仓明细 -->
+  <div class="card">
+    <div class="section-title">持仓明细（可添加任意数量的腿）</div>
+    <table id="legsTable">
+      <thead>
+        <tr>
+          <th style="width:30px">#</th>
+          <th style="width:70px">方向</th>
+          <th style="width:80px">类型</th>
+          <th style="width:100px">行权价</th>
+          <th style="width:100px">开仓权利金</th>
+          <th style="width:100px">当前权利金</th>
+          <th style="width:60px">张数</th>
+          <th style="width:50px"></th>
+        </tr>
+      </thead>
+      <tbody id="legsBody"></tbody>
+    </table>
+    <div class="note" style="margin-top:6px">💡 <strong>开仓权利金</strong> = 你买/卖时付/收的价格；<strong>当前权利金</strong> = 现在盘面上看到的价格。填了当前权利金就能算当前浮盈浮亏。</div>
+    <div style="margin-top:10px; display:flex; gap:8px">
+      <button class="btn btn-secondary" onclick="addLeg()">+ 添加腿</button>
+      <button class="btn" onclick="calculate()">计算</button>
+    </div>
+  </div>
+
+  <!-- 结果 -->
+  <div id="highlightSection" style="display:none">
+    <!-- 投入与当前盈亏 醒目区 -->
+    <div class="highlight-card" id="highlightBox"></div>
+  </div>
+
+  <div class="card" id="resultsCard" style="display:none">
+    <div class="section-title">到期损益计算结果</div>
+    <div class="results" id="resultsGrid"></div>
+    <div id="warningBox"></div>
+
+    <!-- 每条腿的成本明细 -->
+    <div class="leg-detail-box" id="legDetailBox"></div>
+
+    <div style="margin-top:16px">
+      <div class="section-title">到期损益图</div>
+      <canvas id="chartCanvas"></canvas>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#ef4444;opacity:0.3"></div> 盈利区域</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#22c55e;opacity:0.3"></div> 亏损区域</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#fbbf24"></div> 盈亏平衡点</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#6366f1"></div> 当前价格</div>
+        <div class="legend-item">注：红=盈利，绿=亏损（中国习惯）</div>
+      </div>
+    </div>
+
+    <div style="margin-top:14px">
+      <div class="section-title">关键价位盈亏明细</div>
+      <table class="detail-table" id="detailTable">
+        <thead>
+          <tr><th>标的价格</th><th>组合到期盈亏</th><th>说明</th></tr>
+        </thead>
+        <tbody id="detailBody"></tbody>
+      </table>
+    </div>
+
+    <div style="margin-top:14px">
+      <div class="section-title">计算公式说明</div>
+      <div class="formula-box" id="formulaBox"></div>
+    </div>
+
+    <div class="note">
+      * 本计算器计算的是<strong>到期日损益</strong>（时间价值 = 0）。实际持仓中的当前盈亏会因剩余时间价值而不同。<br>
+      * "最大亏损"和"最大盈利"均指到期时的理论极值。如果有裸卖购（卖出看涨无对冲），最大亏损为无限；如果有裸卖沽，标的价格跌至0时亏损最大但有限。<br>
+      * 盈亏平衡点 = 组合到期损益 = 0 时的标的价格，可能有多个。<br>
+      * <strong>当前市场盈亏</strong> = 各腿当前权利金与开仓权利金的差额 × 乘数 × 张数，反映你现在的真实浮盈浮亏。
+    </div>
+  </div>
+</div>
+
+<script>
+// ========== 合约乘数预设 ==========
+const CONTRACTS = {
+  etf: 10000, lh: 16, sr: 10, sa: 20, lc: 1, rb: 10,
+  cu: 5, ru: 10, cf: 5, ta: 5, ma: 10, pg: 20, custom: 0
+};
+
+function onContractChange() {
+  const type = document.getElementById('contractType').value;
+  const m = CONTRACTS[type];
+  if (m > 0) document.getElementById('multiplier').value = m;
+  calculate();
+}
+
+// ========== 策略模板 ==========
+const STRATEGIES = {
+  bullcall: [
+    { direction: 'buy', type: 'call' }, { direction: 'sell', type: 'call' }
+  ],
+  bearput: [
+    { direction: 'buy', type: 'put' }, { direction: 'sell', type: 'put' }
+  ],
+  straddle: [
+    { direction: 'buy', type: 'call' }, { direction: 'buy', type: 'put' }
+  ],
+  strangle: [
+    { direction: 'buy', type: 'call' }, { direction: 'buy', type: 'put' }
+  ],
+  ironcondor: [
+    { direction: 'buy', type: 'put' }, { direction: 'sell', type: 'put' },
+    { direction: 'sell', type: 'call' }, { direction: 'buy', type: 'call' }
+  ],
+  butterfly: [
+    { direction: 'buy', type: 'call' }, { direction: 'sell', type: 'call', qty: '2' },
+    { direction: 'buy', type: 'call' }
+  ],
+  collar: [
+    { direction: 'buy', type: 'call' }, { direction: 'sell', type: 'put' }
+  ],
+  custom: []
+};
+
+// ========== 实盘示例 ==========
+const EXAMPLES = {
+  lh_bullcall: {
+    contractType: 'lh', multiplier: 16, currentPrice: 12310,
+    legs: [
+      { direction: 'buy', type: 'call', strike: 12400, premium: 415, currentPremium: 260, qty: 5 },
+      { direction: 'sell', type: 'call', strike: 13000, premium: 215.5, currentPremium: 15, qty: 5 }
+    ]
+  },
+  sr_bullcall: {
+    contractType: 'sr', multiplier: 10, currentPrice: 5270,
+    legs: [
+      { direction: 'buy', type: 'call', strike: 5300, premium: 65.68, currentPremium: 20, qty: 6 },
+      { direction: 'sell', type: 'call', strike: 5400, premium: 38.83, currentPremium: 5, qty: 6 }
+    ]
+  },
+  sa_bullcall: {
+    contractType: 'sa', multiplier: 20, currentPrice: 1074,
+    legs: [
+      { direction: 'buy', type: 'call', strike: 1100, premium: 37, currentPremium: 15, qty: 6 },
+      { direction: 'sell', type: 'call', strike: 1160, premium: 18.5, currentPremium: 5, qty: 6 }
+    ]
+  },
+  lc_bearput: {
+    contractType: 'lc', multiplier: 1, currentPrice: 167020,
+    legs: [
+      { direction: 'buy', type: 'put', strike: 168000, premium: 11005, currentPremium: 9590, qty: 6 },
+      { direction: 'sell', type: 'put', strike: 156000, premium: 4720, currentPremium: 3200, qty: 6 }
+    ]
+  },
+  etf_bullcall: {
+    contractType: 'etf', multiplier: 10000, currentPrice: 3.005,
+    legs: [
+      { direction: 'buy', type: 'call', strike: 2.900, premium: 0.1484, currentPremium: 0.1163, qty: 150 },
+      { direction: 'sell', type: 'call', strike: 3.000, premium: 0.0705, currentPremium: 0.0496, qty: 150 }
+    ]
+  }
+};
+
+// ========== 腿管理 ==========
+let legCounter = 0;
+
+function addLeg(data = {}) {
+  legCounter++;
+  const tbody = document.getElementById('legsBody');
+  const tr = document.createElement('tr');
+  tr.id = `leg-${legCounter}`;
+  tr.innerHTML = `
+    <td>${legCounter}</td>
+    <td><select onchange="calculate()">
+      <option value="buy" ${data.direction === 'buy' ? 'selected' : ''}>买入</option>
+      <option value="sell" ${data.direction === 'sell' ? 'selected' : ''}>卖出</option>
+    </select></td>
+    <td><select onchange="calculate()">
+      <option value="call" ${data.type === 'call' ? 'selected' : ''}>看涨(购)</option>
+      <option value="put" ${data.type === 'put' ? 'selected' : ''}>看跌(沽)</option>
+    </select></td>
+    <td><input type="number" step="any" value="${data.strike ?? ''}" placeholder="如 2.900" oninput="calculate()"></td>
+    <td><input type="number" step="any" value="${data.premium ?? ''}" placeholder="如 0.1484" oninput="calculate()" style="color:#fbbf24"></td>
+    <td><input type="number" step="any" value="${data.currentPremium ?? ''}" placeholder="盘面价" oninput="calculate()" style="color:#6366f1"></td>
+    <td><input type="number" step="any" value="${data.qty ?? ''}" placeholder="如 150" oninput="calculate()"></td>
+    <td><button class="btn-danger" onclick="removeLeg(${legCounter})">删除</button></td>
+  `;
+  tbody.appendChild(tr);
+}
+
+function removeLeg(id) {
+  document.getElementById(`leg-${id}`).remove();
+  calculate();
+}
+
+function loadPreset(name) {
+  document.getElementById('legsBody').innerHTML = '';
+  legCounter = 0;
+  const legs = STRATEGIES[name];
+  if (legs.length === 0) {
+    addLeg();
+    return;
+  }
+  for (const leg of legs) addLeg(leg);
+  calculate();
+}
+
+function loadExample(name) {
+  const ex = EXAMPLES[name];
+  document.getElementById('contractType').value = ex.contractType;
+  document.getElementById('multiplier').value = ex.multiplier;
+  document.getElementById('currentPrice').value = ex.currentPrice;
+  document.getElementById('legsBody').innerHTML = '';
+  legCounter = 0;
+  for (const leg of ex.legs) addLeg(leg);
+  calculate();
+}
+
+// ========== 读取腿数据 ==========
+function getLegs() {
+  const rows = document.querySelectorAll('#legsBody tr');
+  const legs = [];
+  rows.forEach(row => {
+    const selects = row.querySelectorAll('select');
+    const inputs = row.querySelectorAll('input[type="number"]');
+    const strike = parseFloat(inputs[0].value);
+    const premium = parseFloat(inputs[1].value);
+    const currentPremium = parseFloat(inputs[2].value);
+    const qty = parseFloat(inputs[3].value);
+    if (!isNaN(strike) && !isNaN(premium) && !isNaN(qty) && qty > 0) {
+      legs.push({
+        direction: selects[0].value,
+        type: selects[1].value,
+        strike, premium,
+        currentPremium: isNaN(currentPremium) ? null : currentPremium,
+        qty
+      });
+    }
+  });
+  return legs;
+}
+
+// ========== 核心计算 ==========
+function calcPnL(legs, multiplier, S) {
+  let total = 0;
+  for (const leg of legs) {
+    const intrinsic = leg.type === 'call'
+      ? Math.max(0, S - leg.strike)
+      : Math.max(0, leg.strike - S);
+    const sign = leg.direction === 'buy' ? 1 : -1;
+    total += sign * (intrinsic - leg.premium) * multiplier * leg.qty;
+  }
+  return total;
+}
+
+// 计算当前市场盈亏（用当前权利金代替到期内在价值）
+function calcCurrentPnL(legs, multiplier) {
+  let total = 0;
+  for (const leg of legs) {
+    if (leg.currentPremium === null) return null;
+    const sign = leg.direction === 'buy' ? 1 : -1;
+    // 买入：当前值 - 开仓成本 = (currentPremium - premium) × M × N
+    // 卖出：开仓收入 - 当前负债 = (premium - currentPremium) × M × N
+    total += sign * (leg.currentPremium - leg.premium) * multiplier * leg.qty;
+  }
+  return total;
+}
+
+function calculate() {
+  const legs = getLegs();
+  if (legs.length === 0) {
+    document.getElementById('resultsCard').style.display = 'none';
+    document.getElementById('highlightSection').style.display = 'none';
+    return;
+  }
+
+  const multiplier = parseFloat(document.getElementById('multiplier').value) || 1;
+  const currentPrice = parseFloat(document.getElementById('currentPrice').value) || null;
+
+  // 收集所有行权价
+  const strikes = [...new Set(legs.map(l => l.strike))].sort((a, b) => a - b);
+  if (strikes.length === 0) return;
+
+  // 计算净头寸
+  let netCallQty = 0, netPutQty = 0;
+  for (const leg of legs) {
+    const sign = leg.direction === 'buy' ? 1 : -1;
+    if (leg.type === 'call') netCallQty += sign * leg.qty;
+    else netPutQty += sign * leg.qty;
+  }
+
+  const profitUnlimited = netCallQty > 0;
+  const lossUnlimited = netCallQty < 0;
+
+  // 价格范围
+  const minStrike = strikes[0];
+  const maxStrike = strikes[strikes.length - 1];
+  const range = Math.max(maxStrike - minStrike, minStrike * 0.1);
+  const padding = range * 0.25;
+  let priceMin = Math.max(0, minStrike - padding);
+  let priceMax = maxStrike + padding;
+  if (currentPrice) {
+    priceMin = Math.min(priceMin, currentPrice - range * 0.15);
+    priceMax = Math.max(priceMax, currentPrice + range * 0.15);
+  }
+
+  // 评估点
+  const evalPoints = new Set();
+  evalPoints.add(priceMin);
+  evalPoints.add(priceMax);
+  evalPoints.add(0);
+  for (const k of strikes) {
+    evalPoints.add(k);
+    evalPoints.add(k - 0.0001);
+    evalPoints.add(k + 0.0001);
+  }
+  const sortedPoints = [...evalPoints].sort((a, b) => a - b);
+
+  const evalResults = sortedPoints.map(S => ({ S, pnl: calcPnL(legs, multiplier, S) }));
+
+  let maxProfit = -Infinity, maxProfitAt = 0;
+  let maxLoss = Infinity, maxLossAt = 0;
+  for (const r of evalResults) {
+    if (r.pnl > maxProfit) { maxProfit = r.pnl; maxProfitAt = r.S; }
+    if (r.pnl < maxLoss) { maxLoss = r.pnl; maxLossAt = r.S; }
+  }
+
+  // 盈亏平衡点
+  const breakevens = [];
+  for (let i = 0; i < evalResults.length - 1; i++) {
+    const a = evalResults[i], b = evalResults[i + 1];
+    if ((a.pnl < 0 && b.pnl >= 0) || (a.pnl >= 0 && b.pnl < 0)) {
+      const ratio = Math.abs(a.pnl) / (Math.abs(a.pnl) + Math.abs(b.pnl));
+      breakevens.push(a.S + ratio * (b.S - a.S));
+    }
+  }
+
+  // 净成本/收入
+  let netCost = 0;
+  for (const leg of legs) {
+    const sign = leg.direction === 'buy' ? 1 : -1;
+    netCost += sign * leg.premium * multiplier * leg.qty;
+  }
+
+  // 当前价格到期P&L
+  let currentPnL = null;
+  if (currentPrice) currentPnL = calcPnL(legs, multiplier, currentPrice);
+
+  // 当前市场P&L
+  let currentMarketPnL = calcCurrentPnL(legs, multiplier);
+
+  // 风险回报比
+  let riskReward = null;
+  if (!lossUnlimited && !profitUnlimited && maxLoss < 0 && maxProfit > 0) {
+    riskReward = maxProfit / Math.abs(maxLoss);
+  }
+
+  // 成本占比（净成本 / 差宽 × 乘数 × 最小张数）
+  let costRatio = null;
+  if (strikes.length >= 2 && !lossUnlimited) {
+    const spreadWidth = maxStrike - minStrike;
+    const minQty = Math.min(...legs.map(l => l.qty));
+    costRatio = Math.abs(netCost) / (spreadWidth * multiplier * minQty);
+  }
+
+  // 渲染醒目区
+  displayHighlight({
+    netCost, maxProfit, maxLoss, currentMarketPnL, currentPrice,
+    riskReward, costRatio, profitUnlimited, lossUnlimited,
+    legs, multiplier, breakevens
+  });
+
+  // 渲染到期结果
+  displayResults({
+    netCost, maxProfit, maxProfitAt, maxLoss, maxLossAt,
+    breakevens, currentPnL, currentPrice, riskReward,
+    profitUnlimited, lossUnlimited,
+    legs, multiplier, strikes, netCallQty, netPutQty
+  });
+
+  // 画图
+  drawChart(legs, multiplier, breakevens, currentPrice, currentPnL,
+            maxProfit, maxLoss, priceMin, priceMax,
+            profitUnlimited, lossUnlimited);
+
+  // 每条腿成本与当前盈亏明细
+  displayLegDetail(legs, multiplier, currentMarketPnL);
+
+  // 明细表
+  displayDetail(strikes, legs, multiplier, currentPrice);
+
+  // 公式
+  displayFormula(legs, multiplier, netCost, maxProfit, maxLoss, breakevens,
+                 profitUnlimited, lossUnlimited, currentMarketPnL, costRatio);
+}
+
+// ========== 格式化 ==========
+function fmt(n) {
+  const abs = Math.abs(n);
+  const sign = n < 0 ? '-' : '';
+  if (abs >= 100000) return sign + (abs / 10000).toFixed(2) + ' 万';
+  if (abs >= 1000) return sign + abs.toLocaleString('zh-CN', { maximumFractionDigits: 0 });
+  if (abs >= 1) return sign + abs.toFixed(1);
+  return sign + abs.toFixed(4);
+}
+
+function fmtPrice(n) {
+  if (Math.abs(n) < 10) return n.toFixed(3);
+  if (Math.abs(n) < 100) return n.toFixed(2);
+  return n.toLocaleString('zh-CN', { maximumFractionDigits: 1 });
+}
+
+function fmtPercent(n) {
+  return n.toFixed(1) + '%';
+}
+
+// ========== 醒目区：投入 + 当前盈亏 ==========
+function displayHighlight(d) {
+  document.getElementById('highlightSection').style.display = 'block';
+  const box = document.getElementById('highlightBox');
+
+  let html = '<div style="font-size:14px;font-weight:700;color:#6366f1;margin-bottom:8px">💰 投入与当前盈亏</div>';
+
+  // 总投入
+  const isCost = d.netCost > 0;
+  const costVal = Math.abs(d.netCost);
+  html += `<div class="highlight-row">
+    <span class="highlight-key">总投入（最大亏损）</span>
+    <span class="highlight-val loss">${fmt(costVal)} 元</span>
+  </div>`;
+
+  // 每条腿成本明细
+  for (const leg of d.legs) {
+    const dir = leg.direction === 'buy' ? '买' : '卖';
+    const typ = leg.type === 'call' ? '购' : '沽';
+    const sign = leg.direction === 'buy' ? '-' : '+';
+    const amt = leg.premium * d.multiplier * leg.qty;
+    html += `<div class="highlight-row" style="font-size:12px">
+      <span class="highlight-key" style="color:#71717a">${dir}${typ} ${fmtPrice(leg.strike)} ×${leg.qty}</span>
+      <span class="highlight-val" style="font-size:14px;color:${leg.direction === 'buy' ? '#22c55e' : '#ef4444'}">${sign}${fmt(amt)} 元</span>
+    </div>`;
+  }
+
+  html += '<div style="border-top:1px solid #2e2e3f;margin:6px 0"></div>';
+
+  // 当前市场盈亏
+  if (d.currentMarketPnL !== null) {
+    const cls = d.currentMarketPnL >= 0 ? 'profit' : 'loss';
+    const sign = d.currentMarketPnL >= 0 ? '+' : '';
+    html += `<div class="highlight-row">
+      <span class="highlight-key">🔥 当前市场盈亏（浮盈浮亏）</span>
+      <span class="highlight-val ${cls}">${sign}${fmt(d.currentMarketPnL)} 元</span>
+    </div>`;
+
+    // 占总投入的比例
+    const pct = Math.abs(d.currentMarketPnL) / costVal * 100;
+    const direction = d.currentMarketPnL >= 0 ? '盈利' : '亏损';
+    html += `<div class="highlight-row" style="font-size:12px">
+      <span class="highlight-key" style="color:#71717a">占总投入</span>
+      <span class="highlight-val" style="font-size:14px;color:${cls}">${direction} ${fmtPercent(pct)}</span>
+    </div>`;
+
+    // 如果当前亏损，还要显示"到期若价格不变"对比
+    if (d.currentPrice && d.currentMarketPnL < 0) {
+      const expirationPnL = calcPnL(d.legs, d.multiplier, d.currentPrice);
+      if (expirationPnL > d.currentMarketPnL) {
+        html += `<div class="highlight-row" style="font-size:12px">
+          <span class="highlight-key" style="color:#71717a">到期若价格不变（theta帮赚）</span>
+          <span class="highlight-val profit" style="font-size:14px">${expirationPnL >= 0 ? '+' : ''}${fmt(expirationPnL)} 元</span>
+        </div>`;
+        html += `<div class="highlight-row" style="font-size:12px">
+          <span class="highlight-key" style="color:#71717a">theta可帮你赚回</span>
+          <span class="highlight-val profit" style="font-size:14px">+${fmt(expirationPnL - d.currentMarketPnL)} 元</span>
+        </div>`;
+      }
+    }
+  } else {
+    html += `<div class="highlight-row">
+      <span class="highlight-key">🔥 当前市场盈亏</span>
+      <span class="highlight-val neutral" style="font-size:14px">未填当前权利金</span>
+    </div>`;
+  }
+
+  html += '<div style="border-top:1px solid #2e2e3f;margin:6px 0"></div>';
+
+  // 最大盈利
+  if (d.profitUnlimited) {
+    html += `<div class="highlight-row">
+      <span class="highlight-key">最大盈利（到期）</span>
+      <span class="highlight-val profit">无限</span>
+    </div>`;
+  } else {
+    html += `<div class="highlight-row">
+      <span class="highlight-key">最大盈利（到期）</span>
+      <span class="highlight-val profit">+${fmt(d.maxProfit)} 元</span>
+    </div>`;
+  }
+
+  // 风险回报比
+  if (d.riskReward !== null) {
+    html += `<div class="highlight-row">
+      <span class="highlight-key">风险回报比</span>
+      <span class="highlight-val ${d.riskReward >= 1 ? 'profit' : 'warning'}">1 : ${d.riskReward.toFixed(2)}</span>
+    </div>`;
+  }
+
+  // 成本占比
+  if (d.costRatio !== null) {
+    html += `<div class="highlight-row">
+      <span class="highlight-key">成本占比（净成本/差宽）</span>
+      <span class="highlight-val ${d.costRatio > 0.5 ? 'warning' : 'neutral'}">${fmtPercent(d.costRatio * 100)}</span>
+    </div>`;
+  }
+
+  // 盈亏平衡
+  if (d.breakevens.length > 0) {
+    html += `<div class="highlight-row">
+      <span class="highlight-key">盈亏平衡点</span>
+      <span class="highlight-val neutral">${d.breakevens.map(be => fmtPrice(be)).join(' / ')}</span>
+    </div>`;
+  }
+
+  box.innerHTML = html;
+}
+
+// ========== 到期结果展示 ==========
+function displayResults(d) {
+  document.getElementById('resultsCard').style.display = 'block';
+  const grid = document.getElementById('resultsGrid');
+  const isCost = d.netCost > 0;
+  let html = '';
+
+  html += `<div class="result-card">
+    <div class="result-label">${isCost ? '净成本（总投入）' : '净收入（收取权利金）'}</div>
+    <div class="result-value neutral">${isCost ? '-' : '+'}${fmt(Math.abs(d.netCost))} 元</div>
+    <div class="result-detail">${d.legs.length} 条腿 · 乘数 ${d.multiplier}</div>
+  </div>`;
+
+  if (d.lossUnlimited) {
+    html += `<div class="result-card">
+      <div class="result-label">最大亏损（到期）</div>
+      <div class="result-value loss">无限</div>
+      <div class="result-detail">标的上涨时亏损无上限</div>
+    </div>`;
+  } else {
+    html += `<div class="result-card">
+      <div class="result-label">最大亏损（到期）</div>
+      <div class="result-value loss">${fmt(Math.abs(d.maxLoss))} 元</div>
+      <div class="result-detail">标的 = ${fmtPrice(d.maxLossAt)}</div>
+    </div>`;
+  }
+
+  if (d.profitUnlimited) {
+    html += `<div class="result-card">
+      <div class="result-label">最大盈利（到期）</div>
+      <div class="result-value profit">无限</div>
+      <div class="result-detail">标的上涨时盈利无上限</div>
+    </div>`;
+  } else {
+    html += `<div class="result-card">
+      <div class="result-label">最大盈利（到期）</div>
+      <div class="result-value profit">${fmt(d.maxProfit)} 元</div>
+      <div class="result-detail">标的 = ${fmtPrice(d.maxProfitAt)}</div>
+    </div>`;
+  }
+
+  let beHtml = d.breakevens.length === 0
+    ? '<span style="color:#71717a;font-size:13px">无</span>'
+    : d.breakevens.map(be => `<span class="be-tag">${fmtPrice(be)}</span>`).join('');
+  html += `<div class="result-card">
+    <div class="result-label">盈亏平衡点</div>
+    <div class="breakeven-list" style="margin-top:4px">${beHtml}</div>
+    <div class="result-detail">${d.breakevens.length} 个</div>
+  </div>`;
+
+  if (d.currentPnL !== null) {
+    const cls = d.currentPnL >= 0 ? 'profit' : 'loss';
+    const sign = d.currentPnL >= 0 ? '+' : '';
+    html += `<div class="result-card">
+      <div class="result-label">到期盈亏（若价格不变）</div>
+      <div class="result-value ${cls}">${sign}${fmt(d.currentPnL)} 元</div>
+      <div class="result-detail">现价 = ${fmtPrice(d.currentPrice)}</div>
+    </div>`;
+  }
+
+  if (d.riskReward !== null) {
+    html += `<div class="result-card">
+      <div class="result-label">风险回报比</div>
+      <div class="result-value neutral">1 : ${d.riskReward.toFixed(2)}</div>
+      <div class="result-detail">最大盈利 / 最大亏损</div>
+    </div>`;
+  }
+
+  grid.innerHTML = html;
+
+  let warn = '';
+  if (d.lossUnlimited) {
+    warn += '<div class="warning">⚠️ <strong>无限风险</strong>：此组合在标的上涨时亏损无上限。可能存在裸卖购（卖出看涨期权但没有买入对冲）。请务必确认你了解这个风险。</div>';
+  }
+  if (d.netPutQty < 0) {
+    const lossAt0 = calcPnL(d.legs, d.multiplier, 0);
+    if (lossAt0 < d.maxLoss * 0.95) {
+      warn += `<div class="warning">⚠️ <strong>大额下行风险</strong>：标的跌至 0 时亏损约 ${fmt(Math.abs(lossAt0))} 元。可能存在裸卖沽。</div>`;
+    }
+  }
+  document.getElementById('warningBox').innerHTML = warn;
+}
+
+// ========== 每条腿成本明细 ==========
+function displayLegDetail(legs, multiplier, currentMarketPnL) {
+  const box = document.getElementById('legDetailBox');
+  let html = '<div style="font-size:13px;font-weight:700;color:#6366f1;margin-bottom:6px">每条腿成本与当前盈亏明细</div>';
+
+  for (const leg of legs) {
+    const dir = leg.direction === 'buy' ? '买' : '卖';
+    const typ = leg.type === 'call' ? '购' : '沽';
+    const sign = leg.direction === 'buy' ? -1 : 1; // buy = pay = negative, sell = receive = positive
+    const openAmt = leg.premium * multiplier * leg.qty;
+    const hasCurrent = leg.currentPremium !== null;
+    const curAmt = hasCurrent ? leg.currentPremium * multiplier * leg.qty : null;
+    const legPnL = hasCurrent ? (leg.currentPremium - leg.premium) * multiplier * leg.qty * (leg.direction === 'buy' ? -1 : 1) : null;
+
+    html += `<div style="border-top:1px solid #2e2e3f;padding:4px 0">`;
+    html += `<div class="leg-line"><span class="leg-name">${dir}${typ} ${fmtPrice(leg.strike)} ×${leg.qty}张</span>`;
+
+    if (leg.direction === 'buy') {
+      html += `<span class="leg-amount" style="color:#22c55e">开仓付 ${fmt(openAmt)} 元</span>`;
+    } else {
+      html += `<span class="leg-amount" style="color:#ef4444">开仓收 ${fmt(openAmt)} 元</span>`;
+    }
+    html += `</div>`;
+
+    if (hasCurrent) {
+      if (leg.direction === 'buy') {
+        html += `<div class="leg-line"><span class="leg-name" style="color:#6366f1">当前市值</span>`;
+        html += `<span class="leg-amount" style="color:#6366f1">${fmt(curAmt)} 元</span></div>`;
+        html += `<div class="leg-line"><span class="leg-name">单腿盈亏</span>`;
+        const cls = legPnL >= 0 ? '#ef4444' : '#22c55e';
+        html += `<span class="leg-amount" style="color:${cls}">${legPnL >= 0 ? '+' : ''}${fmt(legPnL)} 元</span></div>`;
+      } else {
+        html += `<div class="leg-line"><span class="leg-name" style="color:#6366f1">当前负债</span>`;
+        html += `<span class="leg-amount" style="color:#6366f1">${fmt(curAmt)} 元</span></div>`;
+        html += `<div class="leg-line"><span class="leg-name">单腿盈亏</span>`;
+        const cls = legPnL >= 0 ? '#ef4444' : '#22c55e';
+        html += `<span class="leg-amount" style="color:${cls}">${legPnL >= 0 ? '+' : ''}${fmt(legPnL)} 元</span></div>`;
+      }
+    }
+    html += `</div>`;
+  }
+
+  if (currentMarketPnL !== null) {
+    html += `<div style="border-top:2px solid #6366f1;padding:6px 0;margin-top:4px">`;
+    html += `<div class="leg-line"><span class="leg-name" style="font-weight:700">组合当前市场盈亏</span>`;
+    const cls = currentMarketPnL >= 0 ? 'profit' : 'loss';
+    html += `<span class="leg-amount" style="font-size:16px;color:#${cls === 'profit' ? 'ef4444' : '22c55e'}">${currentMarketPnL >= 0 ? '+' : ''}${fmt(currentMarketPnL)} 元</span></div>`;
+    html += `</div>`;
+  }
+
+  box.innerHTML = html;
+}
+
+// ========== 明细表 ==========
+function displayDetail(strikes, legs, multiplier, currentPrice) {
+  const tbody = document.getElementById('detailBody');
+  const prices = [...strikes];
+  if (currentPrice && !prices.some(p => Math.abs(p - currentPrice) < 0.001)) {
+    prices.push(currentPrice);
+  }
+  prices.sort((a, b) => a - b);
+
+  let html = '';
+  for (const price of prices) {
+    const pnl = calcPnL(legs, multiplier, price);
+    const sign = pnl >= 0 ? '+' : '';
+    const color = pnl >= 0 ? '#ef4444' : '#22c55e';
+    let label = '';
+    if (currentPrice && Math.abs(price - currentPrice) < 0.001) {
+      label = '← 当前价格';
+    } else {
+      const matchingLegs = legs.filter(l => Math.abs(l.strike - price) < 0.001);
+      if (matchingLegs.length > 0) {
+        label = matchingLegs.map(l =>
+          `${l.direction === 'buy' ? '买' : '卖'}${l.type === 'call' ? '购' : '沽'} ${fmtPrice(l.strike)} ×${l.qty}`
+        ).join('; ');
+      }
+    }
+    html += `<tr>
+      <td>${fmtPrice(price)}</td>
+      <td style="color:${color}">${sign}${fmt(pnl)} 元</td>
+      <td style="color:#71717a">${label}</td>
+    </tr>`;
+  }
+  tbody.innerHTML = html;
+}
+
+// ========== 公式说明 ==========
+function displayFormula(legs, M, netCost, maxP, maxL, bes, pU, lU, curPnL, costRatio) {
+  let html = '<strong>每条腿的到期损益公式：</strong><br>';
+  html += '买购: <code>(max(0, S - K) - P) × M × N</code>　';
+  html += '卖购: <code>(P - max(0, S - K)) × M × N</code><br>';
+  html += '买沽: <code>(max(0, K - S) - P) × M × N</code>　';
+  html += '卖沽: <code>(P - max(0, K - S)) × M × N</code><br>';
+  html += '其中 S=到期标的价, K=行权价, P=开仓权利金, M=合约乘数, N=张数<br><br>';
+
+  html += '<strong>当前市场盈亏公式：</strong><br>';
+  html += '买: <code>(开仓价 - 当前价) × M × N</code>　';  // wait, this is wrong
+  // Actually: for buy, PnL = (currentPremium - premium) × M × N (negative means loss)
+  // No: if you BUY at premium and current is currentPremium:
+  //   current value = currentPremium × M × N (what you could sell for)
+  //   cost = premium × M × N (what you paid)
+  //   PnL = currentPremium × M × N - premium × M × N = (currentPremium - premium) × M × N
+  html += '买: <code>(当前价 - 开仓价) × M × N</code>　';
+  html += '卖: <code>(开仓价 - 当前价) × M × N</code><br>';
+  html += '当前价 = 盘面权利金，正值=盈利，负值=亏损<br><br>';
+
+  html += '<strong>本组合计算过程：</strong><br>';
+  for (const leg of legs) {
+    const dir = leg.direction === 'buy' ? '买' : '卖';
+    const typ = leg.type === 'call' ? '购' : '沽';
+    const sign = leg.direction === 'buy' ? '-' : '+';
+    const cost = leg.premium * M * leg.qty;
+    html += `${dir}${typ} ${fmtPrice(leg.strike)} @ ${leg.premium} × ${M} × ${leg.qty} = ${sign}${fmt(cost)} 元<br>`;
+  }
+  html += `<br><strong>净${netCost > 0 ? '成本' : '收入'} = ${netCost > 0 ? '-' : '+'}${fmt(Math.abs(netCost))} 元</strong><br>`;
+
+  if (lU) {
+    html += '<br><strong>最大亏损 = 无限</strong>（净卖购头寸 > 0，标的上涨时亏损无上限）<br>';
+  } else {
+    html += `<br><strong>最大亏损 = ${fmt(Math.abs(maxL))} 元</strong>（标的 = ${fmtPrice(maxL < 0 ? maxL : 0)} 附近）<br>`;
+  }
+
+  if (pU) {
+    html += '<strong>最大盈利 = 无限</strong>（净买购头寸 > 0，标的上涨时盈利无上限）<br>';
+  } else {
+    html += `<strong>最大盈利 = ${fmt(maxP)} 元</strong>（标的 = ${fmtPrice(maxP)} 附近）<br>`;
+  }
+
+  if (costRatio !== null) {
+    html += `<br><strong>成本占比 = ${fmtPercent(costRatio * 100)}</strong>（净成本 / 差宽×乘数×张数）<br>`;
+    html += `赔率参考：成本占比 < 40% → 赔率较好；40-60% → 一般；> 60% → 赔率较差<br>`;
+  }
+
+  if (curPnL !== null) {
+    html += `<br><strong>当前市场盈亏 = ${curPnL >= 0 ? '+' : ''}${fmt(curPnL)} 元</strong><br>`;
+    html += `计算方式：各腿 (当前权利金 - 开仓权利金) × 方向符号 × 乘数 × 张数 加总<br>`;
+  }
+
+  if (bes.length > 0) {
+    html += `<br><strong>盈亏平衡点</strong>（组合到期 P&L = 0 时的标的价格）：<br>`;
+    bes.forEach((be, i) => {
+      html += `  平衡点 ${i + 1}: <code>S = ${fmtPrice(be)}</code><br>`;
+    });
+  }
+
+  document.getElementById('formulaBox').innerHTML = html;
+}
+
+// ========== 画图 ==========
+function drawChart(legs, multiplier, breakevens, currentPrice, currentPnL,
+                   maxProfit, maxLoss, priceMin, priceMax,
+                   profitUnlimited, lossUnlimited) {
+  const canvas = document.getElementById('chartCanvas');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = 380 * dpr;
+  ctx.scale(dpr, dpr);
+
+  const W = rect.width;
+  const H = 380;
+  const m = { top: 25, right: 55, bottom: 45, left: 75 };
+  const cw = W - m.left - m.right;
+  const ch = H - m.top - m.bottom;
+
+  const N = 400;
+  const data = [];
+  for (let i = 0; i <= N; i++) {
+    const S = priceMin + (priceMax - priceMin) * i / N;
+    data.push({ S, pnl: calcPnL(legs, multiplier, S) });
+  }
+
+  let yMin = Infinity, yMax = -Infinity;
+  for (const d of data) {
+    if (d.pnl < yMin) yMin = d.pnl;
+    if (d.pnl > yMax) yMax = d.pnl;
+  }
+  yMin = Math.min(yMin, 0);
+  yMax = Math.max(yMax, 0);
+  const yRange = Math.max(yMax - yMin, 1);
+  yMin -= yRange * 0.08;
+  yMax += yRange * 0.08;
+
+  const xS = S => m.left + (S - priceMin) / (priceMax - priceMin) * cw;
+  const yS = p => m.top + (yMax - p) / (yMax - yMin) * ch;
+
+  ctx.fillStyle = '#111118';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.strokeStyle = '#1e1e2f';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 6; i++) {
+    const y = m.top + ch * i / 6;
+    const val = yMax - (yMax - yMin) * i / 6;
+    ctx.beginPath(); ctx.moveTo(m.left, y); ctx.lineTo(W - m.right, y); ctx.stroke();
+    ctx.fillStyle = '#52525b'; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText(fmt(val), m.left - 6, y + 3);
+  }
+  for (let i = 0; i <= 8; i++) {
+    const x = m.left + cw * i / 8;
+    const val = priceMin + (priceMax - priceMin) * i / 8;
+    ctx.beginPath(); ctx.moveTo(x, m.top); ctx.lineTo(x, H - m.bottom); ctx.stroke();
+    ctx.fillStyle = '#52525b'; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText(fmtPrice(val), x, H - m.bottom + 16);
+  }
+
+  const zY = yS(0);
+  ctx.strokeStyle = '#71717a'; ctx.lineWidth = 1.5;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(m.left, zY); ctx.lineTo(W - m.right, zY); ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = 'rgba(239,68,68,0.1)';
+  ctx.beginPath();
+  ctx.moveTo(xS(data[0].S), zY);
+  for (const d of data) ctx.lineTo(xS(d.S), yS(Math.max(d.pnl, 0)));
+  ctx.lineTo(xS(data[N].S), zY);
+  ctx.closePath(); ctx.fill();
+
+  ctx.fillStyle = 'rgba(34,197,94,0.1)';
+  ctx.beginPath();
+  ctx.moveTo(xS(data[0].S), zY);
+  for (const d of data) ctx.lineTo(xS(d.S), yS(Math.min(d.pnl, 0)));
+  ctx.lineTo(xS(data[N].S), zY);
+  ctx.closePath(); ctx.fill();
+
+  ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  for (let i = 0; i <= N; i++) {
+    const x = xS(data[i].S), y = yS(data[i].pnl);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  const strikes = [...new Set(legs.map(l => l.strike))];
+  for (const k of strikes) {
+    if (k < priceMin || k > priceMax) continue;
+    const x = xS(k);
+    ctx.strokeStyle = '#3f3f46'; ctx.lineWidth = 1;
+    ctx.setLineDash([2, 3]);
+    ctx.beginPath(); ctx.moveTo(x, m.top); ctx.lineTo(x, H - m.bottom); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#71717a'; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText(fmtPrice(k), x, m.top - 4);
+  }
+
+  for (const be of breakevens) {
+    if (be < priceMin || be > priceMax) continue;
+    const x = xS(be);
+    ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(x, m.top); ctx.lineTo(x, H - m.bottom); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath(); ctx.arc(x, zY, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText(`BE ${fmtPrice(be)}`, x, H - m.bottom + 30);
+  }
+
+  if (currentPrice && currentPrice >= priceMin && currentPrice <= priceMax) {
+    const x = xS(currentPrice);
+    ctx.strokeStyle = '#6366f1'; ctx.lineWidth = 1.5;
+    ctx.setLineDash([2, 4]);
+    ctx.beginPath(); ctx.moveTo(x, m.top); ctx.lineTo(x, H - m.bottom); ctx.stroke();
+    ctx.setLineDash([]);
+    if (currentPnL !== null) {
+      const y = yS(currentPnL);
+      ctx.fillStyle = '#6366f1';
+      ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.fillStyle = '#6366f1'; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText(`现价 ${fmtPrice(currentPrice)}`, x, m.top - 4);
+      const pnlText = `${currentPnL >= 0 ? '+' : ''}${fmt(currentPnL)}`;
+      ctx.fillText(pnlText, x, H - m.bottom + 30);
+    }
+  }
+
+  ctx.fillStyle = '#71717a'; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
+  ctx.fillText('标的价格', m.left + cw / 2, H - 8);
+  ctx.save();
+  ctx.translate(16, m.top + ch / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('盈亏 (元)', 0, 0);
+  ctx.restore();
+}
+
+// ========== 初始化 ==========
+onContractChange();
+loadExample('etf_bullcall');
+
+document.getElementById('multiplier').addEventListener('input', calculate);
+document.getElementById('currentPrice').addEventListener('input', calculate);
+
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    if (document.getElementById('resultsCard').style.display !== 'none') calculate();
+  }, 200);
+});
+</script>
+</body>
+</html>
