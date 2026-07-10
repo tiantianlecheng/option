@@ -897,6 +897,35 @@ function displayRiskAudit(legs, multiplier, currentPrice, useBA, riskReward, cos
   let html = '<div style="font-size:14px;font-weight:700;color:#6366f1;margin-bottom:10px">风控审核报告</div>';
   let hasAudit = false;
 
+  // 0. Strike order structural check (行权价顺序检查)
+  if (legs.length === 2) {
+    const buyLeg = legs.find(l => l.direction === 'buy');
+    const sellLeg = legs.find(l => l.direction === 'sell');
+    if (buyLeg && sellLeg && buyLeg.type === sellLeg.type) {
+      if (buyLeg.type === 'call' && buyLeg.strike >= sellLeg.strike) {
+        html += `<div class="audit-item"><span class="audit-icon">❌</span><div class="audit-content"><div class="audit-title" style="color:#ef4444">行权价顺序错误 — 牛市价差</div><div class="audit-detail">买购行权价必须低于卖购行权价。当前买${fmtPrice(buyLeg.strike)} >= 卖${fmtPrice(sellLeg.strike)}，结构错误。牛市价差要求：买低卖高。</div></div><span class="audit-status fail">拒绝</span></div>`;
+        hasAudit = true;
+      } else if (buyLeg.type === 'put' && buyLeg.strike <= sellLeg.strike) {
+        html += `<div class="audit-item"><span class="audit-icon">❌</span><div class="audit-content"><div class="audit-title" style="color:#ef4444">行权价顺序错误 — 熊市价差</div><div class="audit-detail">买Put行权价必须高于卖Put行权价。当前买${fmtPrice(buyLeg.strike)} <= 卖${fmtPrice(sellLeg.strike)}，结构错误。熊市价差要求：买高卖低。</div></div><span class="audit-status fail">拒绝</span></div>`;
+        hasAudit = true;
+      }
+    }
+  }
+
+  // 0b. Negative cost / profit rejection (负成本/负利润拦截)
+  if (legs.length === 2) {
+    const buyLeg = legs.find(l => l.direction === 'buy');
+    const sellLeg = legs.find(l => l.direction === 'sell');
+    if (buyLeg && sellLeg && buyLeg.type === sellLeg.type && netCost <= 0) {
+      html += `<div class="audit-item"><span class="audit-icon">❌</span><div class="audit-content"><div class="audit-title" style="color:#ef4444">净成本异常 — 权利金倒挂</div><div class="audit-detail">净成本 <= 0，卖腿收的钱比买腿花的还多。数据有误或权利金极度倒挂，请检查买卖价输入。</div></div><span class="audit-status fail">拒绝</span></div>`;
+      hasAudit = true;
+    }
+    if (buyLeg && sellLeg && buyLeg.type === sellLeg.type && maxProfit <= 0 && maxLoss < 0) {
+      html += `<div class="audit-item"><span class="audit-icon">❌</span><div class="audit-content"><div class="audit-title" style="color:#ef4444">最大利润为负 — 必亏组合</div><div class="audit-detail">行权价差不足以覆盖净成本，无论标的涨跌都亏。卖购行权价和买购太接近或权利金收支倒挂。</div></div><span class="audit-status fail">拒绝</span></div>`;
+      hasAudit = true;
+    }
+  }
+
   // 1. Zero bid check (零盘口拦截)
   if (useBA) {
     for (const leg of legs) {
@@ -946,6 +975,33 @@ function displayRiskAudit(legs, multiplier, currentPrice, useBA, riskReward, cos
       hasAudit = true;
     }
 
+    // 3b. Sell leg OTM depth (卖腿虚值深度)
+    if (legs.length === 2) {
+      const sellLeg = legs.find(l => l.direction === 'sell');
+      if (sellLeg) {
+        let otmPct = 0, depthLabel = '', isOTM = false;
+        if (sellLeg.type === 'call' && sellLeg.strike > currentPrice) {
+          otmPct = (sellLeg.strike - currentPrice) / currentPrice * 100;
+          depthLabel = `卖购虚值深度: ${otmPct.toFixed(1)}% (标的需涨这么多才能封顶赚满)`;
+          isOTM = true;
+        } else if (sellLeg.type === 'put' && sellLeg.strike < currentPrice) {
+          otmPct = (currentPrice - sellLeg.strike) / currentPrice * 100;
+          depthLabel = `卖Put虚值深度: ${otmPct.toFixed(1)}% (标的需跌这么多才能封底赚满)`;
+          isOTM = true;
+        } else if (sellLeg.type === 'call' && sellLeg.strike < currentPrice) {
+          otmPct = (currentPrice - sellLeg.strike) / currentPrice * 100;
+          depthLabel = `卖购为实值 ${otmPct.toFixed(1)}% (上行空间受限，封顶利润极小)`;
+        } else if (sellLeg.type === 'put' && sellLeg.strike > currentPrice) {
+          otmPct = (sellLeg.strike - currentPrice) / currentPrice * 100;
+          depthLabel = `卖Put为实值 ${otmPct.toFixed(1)}% (下行空间受限，封底利润极小)`;
+        }
+        if (depthLabel) {
+          html += `<div class="audit-item"><span class="audit-icon">${isOTM ? '🎯' : '⚠️'}</span><div class="audit-content"><div class="audit-title">${depthLabel}</div></div><span class="audit-status ${isOTM ? 'info' : 'warn'}">${isOTM ? '虚值' : '实值'}</span></div>`;
+          hasAudit = true;
+        }
+      }
+    }
+
     // 4. Net Time Value (for 2-leg spreads)
     if (legs.length === 2) {
       const buyLeg = legs.find(l => l.direction === 'buy');
@@ -962,7 +1018,7 @@ function displayRiskAudit(legs, multiplier, currentPrice, useBA, riskReward, cos
         if (netTVPct > 5) { tvStatus = 'fail'; tvIcon = '❌'; tvLabel = 'TV过高'; }
         else if (netTVPct > 2) { tvStatus = 'warn'; tvIcon = '⚠️'; tvLabel = 'TV中等'; }
 
-        html += `<div class="audit-item"><span class="audit-icon">${tvIcon}</span><div class="audit-content"><div class="audit-title">净时间价值分析</div><div class="audit-detail">买腿TV: ${buyTV.toFixed(4)} | 卖腿TV: ${sellTV.toFixed(4)} | 净TV支出: ${netTV.toFixed(4)} (${netTVPct.toFixed(2)}%)${netTVPct > 5 ? ' — Theta拖累严重，建议等IV回落或换品种' : netTVPct > 2 ? ' — 可接受但不理想' : ' — Theta友好'}</div></div><span class="audit-status ${tvStatus}">${tvLabel}</span></div>`;
+        html += `<div class="audit-item"><span class="audit-icon">${tvIcon}</span><div class="audit-content"><div class="audit-title">净时间价值分析</div><div class="audit-detail">买腿TV: ${buyTV.toFixed(4)}（你付出的保费）| 卖腿TV: ${sellTV.toFixed(4)}（你收回的补贴）| 净TV支出: ${netTV.toFixed(4)} (${netTVPct.toFixed(2)}%)${netTVPct > 5 ? ' — Theta拖累严重，建议等IV回落或换品种' : netTVPct > 2 ? ' — 可接受但不理想' : ' — Theta友好'}</div></div><span class="audit-status ${tvStatus}">${tvLabel}</span></div>`;
         hasAudit = true;
       }
     }
@@ -1044,7 +1100,21 @@ function displayResults(d) {
   }
 
   let beHtml = d.breakevens.length === 0 ? '<span style="color:#71717a;font-size:13px">无</span>' : d.breakevens.map(be => `<span class="be-tag">${fmtPrice(be)}</span>`).join('');
-  html += `<div class="result-card"><div class="result-label">盈亏平衡点</div><div class="breakeven-list" style="margin-top:4px">${beHtml}</div><div class="result-detail">${d.breakevens.length} 个</div></div>`;
+  let beDetail = `${d.breakevens.length} 个`;
+  if (d.breakevens.length > 0 && d.currentPrice) {
+    const isBullish = d.netCallQty > 0;
+    const isBearish = d.netPutQty > 0;
+    if (isBullish) {
+      const firstBE = d.breakevens[0];
+      const risePct = ((firstBE - d.currentPrice) / d.currentPrice * 100);
+      beDetail += ` · 标的需涨 ${risePct.toFixed(2)}% 开始盈利`;
+    } else if (isBearish) {
+      const firstBE = d.breakevens[0];
+      const fallPct = ((d.currentPrice - firstBE) / d.currentPrice * 100);
+      beDetail += ` · 标的需跌 ${fallPct.toFixed(2)}% 开始盈利`;
+    }
+  }
+  html += `<div class="result-card"><div class="result-label">盈亏平衡点</div><div class="breakeven-list" style="margin-top:4px">${beHtml}</div><div class="result-detail">${beDetail}</div></div>`;
 
   if (d.currentPnL !== null) {
     const cls = d.currentPnL >= 0 ? 'profit' : 'loss';
@@ -1173,6 +1243,23 @@ function displayFormula(legs, M, netCost, maxP, maxL, bes, pU, lU, curPnL, costR
     html += '<strong>最大盈利 = 无限</strong>（净买购头寸 > 0）<br>';
   } else {
     html += `<strong>最大盈利 = ${fmt(maxP)} 元</strong><br>`;
+  }
+
+  // Dual bookkeeping (双账本) — from future_bull_spread_monitor.py
+  if (legs.length === 2 && !lU && !pU) {
+    const buyLeg = legs.find(l => l.direction === 'buy');
+    const sellLeg = legs.find(l => l.direction === 'sell');
+    if (buyLeg && sellLeg && buyLeg.qty === sellLeg.qty) {
+      const qty = buyLeg.qty;
+      const perUnitCost = Math.abs(netCost) / (M * qty);
+      const perHandCost = Math.abs(netCost) / qty;
+      const perUnitProfit = maxP / (M * qty);
+      const perHandProfit = maxP / qty;
+      html += `<br><strong>双账本明细（乘数=${M}）：</strong><br>`;
+      html += `单价账本: 净成本 ${perUnitCost.toFixed(4)} / 最大利润 ${perUnitProfit.toFixed(4)} (元/单位)<br>`;
+      html += `每手账本: 净成本 ${perHandCost.toFixed(2)} / 最大利润 ${perHandProfit.toFixed(2)} (元/手)<br>`;
+      html += `盈亏比: 1 : ${(maxP / Math.abs(maxL)).toFixed(2)} (乘数不影响盈亏比)<br>`;
+    }
   }
 
   if (costRatio !== null) {
