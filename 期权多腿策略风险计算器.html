@@ -711,15 +711,13 @@ function calculate() {
   const currentPrice = parseFloat(document.getElementById('currentPrice').value) || null;
   const useBA = document.getElementById('useBidAsk')?.value === 'yes';
 
-  // Resolve effective premium for each leg (mid if bid/ask, else premium field)
+  // Resolve premiums: 开仓权利金 always used for cost/P&L; 买一/卖一 only for audit
   const legs = rawLegs.map(leg => {
-    let effPremium = leg.premium;
     let optData = null;
     if (useBA && leg.bid !== null && leg.ask !== null) {
       optData = calcOptionData(currentPrice || 0, leg.strike, leg.bid, leg.ask, leg.type);
-      effPremium = optData.mid;
     }
-    return { ...leg, effectivePremium: effPremium, optData, useBidAsk: useBA };
+    return { ...leg, effectivePremium: leg.premium, optData, useBidAsk: useBA };
   });
 
   const strikes = [...new Set(legs.map(l => l.strike))].sort((a, b) => a - b);
@@ -850,7 +848,7 @@ function displayHighlight(d) {
     const typ = leg.type === 'call' ? '购' : '沽';
     const sign = leg.direction === 'buy' ? '-' : '+';
     const amt = leg.effectivePremium * d.multiplier * leg.qty;
-    const premiumLabel = leg.useBidAsk ? `(中间价${leg.effectivePremium.toFixed(4)})` : `(权利金${leg.effectivePremium.toFixed(4)})`;
+    const premiumLabel = `(开仓价${leg.effectivePremium.toFixed(4)})`;
     html += `<div class="highlight-row" style="font-size:12px"><span class="highlight-key" style="color:#71717a">${dir}${typ} 行权价${fmtPrice(leg.strike)} ${premiumLabel} x${leg.qty}</span><span class="highlight-val" style="font-size:14px;color:${leg.direction === 'buy' ? '#22c55e' : '#ef4444'}">${sign}${fmt(amt)} 元</span></div>`;
   }
 
@@ -965,9 +963,19 @@ function displayRiskAudit(legs, multiplier, currentPrice, useBA, riskReward, cos
       const intrinsic = leg.type === 'call'
         ? Math.max(0, currentPrice - leg.strike)
         : Math.max(0, leg.strike - currentPrice);
-      const premium = leg.effectivePremium;
-      const tv = premium - intrinsic;
+      // Use mid-price for TV audit if available, otherwise use opening premium
+      const auditPremium = leg.optData ? leg.optData.mid : leg.effectivePremium;
+      const tv = auditPremium - intrinsic;
       const tvPct = currentPrice > 0 ? (tv / currentPrice * 100) : 0;
+
+      // Show both prices if using bid/ask
+      let premiumDetail = '';
+      if (leg.optData && leg.useBidAsk) {
+        const slippage = auditPremium - leg.effectivePremium;
+        premiumDetail = `中间价 ${auditPremium.toFixed(4)} | 开仓价 ${leg.effectivePremium.toFixed(4)} | 滑点 ${slippage.toFixed(4)}`;
+      } else {
+        premiumDetail = `权利金 ${auditPremium.toFixed(4)}`;
+      }
 
       let statusLabel = '', statusColor = '';
       if (leg.type === 'call') {
@@ -980,7 +988,7 @@ function displayRiskAudit(legs, multiplier, currentPrice, useBA, riskReward, cos
         else { statusLabel = '平值'; statusColor = 'info'; }
       }
 
-      html += `<div class="audit-item"><span class="audit-icon">📍</span><div class="audit-content"><div class="audit-title">${dir}${typ} ${fmtPrice(leg.strike)} — ${statusLabel}</div><div class="audit-detail">权利金 ${premium.toFixed(4)} = 内在 ${intrinsic.toFixed(4)} + 时间价值 ${tv.toFixed(4)} (${tvPct.toFixed(2)}%)</div></div><span class="audit-status ${statusColor}">${statusLabel.split(' ')[0]}</span></div>`;
+      html += `<div class="audit-item"><span class="audit-icon">📍</span><div class="audit-content"><div class="audit-title">${dir}${typ} ${fmtPrice(leg.strike)} — ${statusLabel}</div><div class="audit-detail">${premiumDetail} = 内在 ${intrinsic.toFixed(4)} + 时间价值 ${tv.toFixed(4)} (${tvPct.toFixed(2)}%)</div></div><span class="audit-status ${statusColor}">${statusLabel.split(' ')[0]}</span></div>`;
       hasAudit = true;
     }
 
@@ -1035,15 +1043,17 @@ function displayRiskAudit(legs, multiplier, currentPrice, useBA, riskReward, cos
       }
     }
 
-    // 4. Net Time Value (for 2-leg spreads)
+    // 4. Net Time Value (for 2-leg spreads, uses auditPremium = mid-price)
     if (legs.length === 2) {
       const buyLeg = legs.find(l => l.direction === 'buy');
       const sellLeg = legs.find(l => l.direction === 'sell');
       if (buyLeg && sellLeg) {
         const buyIntrinsic = buyLeg.type === 'call' ? Math.max(0, currentPrice - buyLeg.strike) : Math.max(0, buyLeg.strike - currentPrice);
         const sellIntrinsic = sellLeg.type === 'call' ? Math.max(0, currentPrice - sellLeg.strike) : Math.max(0, sellLeg.strike - currentPrice);
-        const buyTV = buyLeg.effectivePremium - buyIntrinsic;
-        const sellTV = sellLeg.effectivePremium - sellIntrinsic;
+        const buyAuditP = buyLeg.optData ? buyLeg.optData.mid : buyLeg.effectivePremium;
+        const sellAuditP = sellLeg.optData ? sellLeg.optData.mid : sellLeg.effectivePremium;
+        const buyTV = buyAuditP - buyIntrinsic;
+        const sellTV = sellAuditP - sellIntrinsic;
         const netTV = buyTV - sellTV;
         const netTVPct = currentPrice > 0 ? (netTV / currentPrice * 100) : 0;
 
@@ -1056,11 +1066,12 @@ function displayRiskAudit(legs, multiplier, currentPrice, useBA, riskReward, cos
       }
     }
 
-    // 5. Deep ITM threshold (for buy leg - 现货替代检查)
+    // 5. Deep ITM threshold (for buy leg - 现货替代检查, uses auditPremium)
     const buyLeg = legs.find(l => l.direction === 'buy');
     if (buyLeg && legs.length === 2) {
       const intrinsic = buyLeg.type === 'call' ? Math.max(0, currentPrice - buyLeg.strike) : Math.max(0, buyLeg.strike - currentPrice);
-      const tv = buyLeg.effectivePremium - intrinsic;
+      const auditP = buyLeg.optData ? buyLeg.optData.mid : buyLeg.effectivePremium;
+      const tv = auditP - intrinsic;
       const threshold = currentPrice * 0.01;
       const isITM = buyLeg.type === 'call' ? buyLeg.strike < currentPrice : buyLeg.strike > currentPrice;
 
@@ -1257,13 +1268,14 @@ function displayFormula(legs, M, netCost, maxP, maxL, bes, pU, lU, curPnL, costR
   html += '纯时间价值 = <code>中间价 - 内在价值</code><br>';
   html += '价差比率 = <code>(卖一 - 买一) / 中间价</code>，>5%则流动性警告<br><br>';
 
-  html += '<strong>本组合计算过程：</strong><br>';
+  html += '<strong>本组合计算过程（使用开仓权利金）：</strong><br>';
   for (const leg of legs) {
     const dir = leg.direction === 'buy' ? '买' : '卖';
     const typ = leg.type === 'call' ? '购' : '沽';
     const sign = leg.direction === 'buy' ? '-' : '+';
     const cost = leg.effectivePremium * M * leg.qty;
-    html += `${dir}${typ} ${fmtPrice(leg.strike)} @ ${leg.effectivePremium.toFixed(4)} x ${M} x ${leg.qty} = ${sign}${fmt(cost)} 元<br>`;
+    const auditNote = leg.optData ? ` [中间价${leg.optData.mid.toFixed(4)}, 仅用于审核]` : '';
+    html += `${dir}${typ} ${fmtPrice(leg.strike)} @ 开仓价${leg.effectivePremium.toFixed(4)} x ${M} x ${leg.qty} = ${sign}${fmt(cost)} 元${auditNote}<br>`;
   }
   html += `<br><strong>净${netCost > 0 ? '成本' : '收入'} = ${netCost > 0 ? '-' : '+'}${fmt(Math.abs(netCost))} 元</strong><br>`;
 
