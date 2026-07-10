@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>期权多腿策略风险计算器</title>
+<title>期权多腿策略风险计算器 Pro</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
@@ -14,9 +14,22 @@ body {
   min-height: 100vh;
   line-height: 1.6;
 }
-.container { max-width: 1100px; margin: 0 auto; }
+.container { max-width: 1200px; margin: 0 auto; }
 h1 { font-size: 22px; margin-bottom: 2px; }
-.subtitle { color: #71717a; font-size: 13px; margin-bottom: 20px; }
+.subtitle { color: #71717a; font-size: 13px; margin-bottom: 16px; }
+
+/* Tabs */
+.tabs { display: flex; gap: 4px; margin-bottom: 14px; border-bottom: 2px solid #2e2e3f; }
+.tab {
+  background: transparent; border: none; color: #71717a;
+  padding: 10px 20px; font-size: 14px; cursor: pointer; font-family: inherit;
+  border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s;
+}
+.tab:hover { color: #e4e4e7; }
+.tab.active { color: #6366f1; border-bottom-color: #6366f1; font-weight: 600; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
 .card {
   background: #1a1a2e;
   border: 1px solid #2e2e3f;
@@ -25,88 +38,50 @@ h1 { font-size: 22px; margin-bottom: 2px; }
   margin-bottom: 14px;
 }
 .section-title {
-  font-size: 13px;
-  font-weight: 600;
-  margin-bottom: 10px;
-  color: #a1a1aa;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-size: 13px; font-weight: 600; margin-bottom: 10px;
+  color: #a1a1aa; text-transform: uppercase; letter-spacing: 0.5px;
 }
 .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
 .field { display: flex; flex-direction: column; gap: 3px; }
 .field label { font-size: 11px; color: #71717a; }
 .field select, .field input {
-  background: #111118;
-  border: 1px solid #2e2e3f;
-  border-radius: 4px;
-  color: #e4e4e7;
-  padding: 7px 10px;
-  font-size: 13px;
-  font-family: inherit;
-  outline: none;
-  transition: border-color 0.2s;
+  background: #111118; border: 1px solid #2e2e3f; border-radius: 4px;
+  color: #e4e4e7; padding: 7px 10px; font-size: 13px; font-family: inherit;
+  outline: none; transition: border-color 0.2s;
 }
 .field select:focus, .field input:focus { border-color: #6366f1; }
+
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
 th {
-  text-align: left;
-  padding: 6px 8px;
-  color: #71717a;
-  font-weight: 500;
-  border-bottom: 1px solid #2e2e3f;
-  font-size: 12px;
+  text-align: left; padding: 6px 8px; color: #71717a; font-weight: 500;
+  border-bottom: 1px solid #2e2e3f; font-size: 12px;
 }
 td { padding: 5px 8px; border-bottom: 1px solid #1e1e2f; }
 td input, td select {
-  background: #111118;
-  border: 1px solid #2e2e3f;
-  border-radius: 4px;
-  color: #e4e4e7;
-  padding: 5px 7px;
-  font-size: 13px;
-  font-family: inherit;
-  width: 100%;
-  outline: none;
+  background: #111118; border: 1px solid #2e2e3f; border-radius: 4px;
+  color: #e4e4e7; padding: 5px 7px; font-size: 13px; font-family: inherit;
+  width: 100%; outline: none;
 }
 td input:focus, td select:focus { border-color: #6366f1; }
+
 .btn {
-  background: #6366f1;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 8px 18px;
-  font-size: 13px;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background 0.2s;
+  background: #6366f1; color: white; border: none; border-radius: 4px;
+  padding: 8px 18px; font-size: 13px; font-family: inherit; cursor: pointer; transition: background 0.2s;
 }
 .btn:hover { background: #5558e0; }
-.btn-secondary {
-  background: #2e2e3f;
-  color: #e4e4e7;
-}
+.btn-secondary { background: #2e2e3f; color: #e4e4e7; }
 .btn-secondary:hover { background: #3e3e4f; }
 .btn-danger {
-  background: transparent;
-  color: #ef4444;
-  border: 1px solid #ef4444;
-  border-radius: 3px;
-  padding: 3px 7px;
-  font-size: 11px;
-  cursor: pointer;
-  font-family: inherit;
+  background: transparent; color: #ef4444; border: 1px solid #ef4444;
+  border-radius: 3px; padding: 3px 7px; font-size: 11px; cursor: pointer; font-family: inherit;
 }
 .btn-danger:hover { background: #ef4444; color: white; }
+
 .results {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 10px;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;
 }
 .result-card {
-  background: #111118;
-  border: 1px solid #2e2e3f;
-  border-radius: 6px;
-  padding: 12px;
+  background: #111118; border: 1px solid #2e2e3f; border-radius: 6px; padding: 12px;
 }
 .result-label { font-size: 11px; color: #71717a; margin-bottom: 3px; }
 .result-value { font-size: 18px; font-weight: 700; }
@@ -115,88 +90,62 @@ td input:focus, td select:focus { border-color: #6366f1; }
 .result-value.neutral { color: #e4e4e7; }
 .result-value.warning { color: #fbbf24; }
 .result-detail { font-size: 10px; color: #71717a; margin-top: 2px; }
+
 #chartCanvas { width: 100%; height: 380px; display: block; }
+
 .preset-bar { display: flex; gap: 6px; flex-wrap: wrap; }
 .preset-btn {
-  background: #1e1e2f;
-  border: 1px solid #2e2e3f;
-  color: #a1a1aa;
-  border-radius: 4px;
-  padding: 5px 10px;
-  font-size: 12px;
-  cursor: pointer;
-  font-family: inherit;
-  transition: all 0.2s;
+  background: #1e1e2f; border: 1px solid #2e2e3f; color: #a1a1aa;
+  border-radius: 4px; padding: 5px 10px; font-size: 12px; cursor: pointer;
+  font-family: inherit; transition: all 0.2s;
 }
 .preset-btn:hover { border-color: #6366f1; color: #e4e4e7; }
+
 .breakeven-list { display: flex; gap: 6px; flex-wrap: wrap; }
 .be-tag {
-  background: #1e1e2f;
-  border: 1px solid #fbbf24;
-  color: #fbbf24;
-  border-radius: 4px;
-  padding: 3px 8px;
-  font-size: 12px;
+  background: #1e1e2f; border: 1px solid #fbbf24; color: #fbbf24;
+  border-radius: 4px; padding: 3px 8px; font-size: 12px;
 }
+
 .warning {
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid #ef4444;
-  border-radius: 6px;
-  padding: 8px 12px;
-  color: #ef4444;
-  font-size: 12px;
-  margin-top: 10px;
+  background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444;
+  border-radius: 6px; padding: 8px 12px; color: #ef4444; font-size: 12px; margin-top: 10px;
 }
+.warning-yellow {
+  background: rgba(251, 191, 36, 0.1); border: 1px solid #fbbf24;
+  border-radius: 6px; padding: 8px 12px; color: #fbbf24; font-size: 12px; margin-top: 10px;
+}
+.warning-green {
+  background: rgba(34, 197, 94, 0.1); border: 1px solid #22c55e;
+  border-radius: 6px; padding: 8px 12px; color: #22c55e; font-size: 12px; margin-top: 10px;
+}
+
 .detail-table { width: 100%; font-size: 12px; margin-top: 10px; }
 .detail-table th { color: #71717a; font-weight: 500; font-size: 11px; }
 .detail-table td { padding: 4px 8px; }
-.legend {
-  display: flex;
-  gap: 16px;
-  font-size: 11px;
-  color: #71717a;
-  margin-top: 8px;
-  flex-wrap: wrap;
-}
+
+.legend { display: flex; gap: 16px; font-size: 11px; color: #71717a; margin-top: 8px; flex-wrap: wrap; }
 .legend-item { display: flex; align-items: center; gap: 4px; }
 .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
-.note {
-  font-size: 11px;
-  color: #52525b;
-  margin-top: 12px;
-  line-height: 1.5;
-}
+
+.note { font-size: 11px; color: #52525b; margin-top: 12px; line-height: 1.5; }
+
 .formula-box {
-  background: #111118;
-  border: 1px solid #2e2e3f;
-  border-radius: 6px;
-  padding: 14px;
-  margin-top: 10px;
-  font-size: 12px;
-  line-height: 1.8;
-  color: #a1a1aa;
+  background: #111118; border: 1px solid #2e2e3f; border-radius: 6px;
+  padding: 14px; margin-top: 10px; font-size: 12px; line-height: 1.8; color: #a1a1aa;
 }
 .formula-box code {
-  background: #1e1e2f;
-  padding: 1px 5px;
-  border-radius: 3px;
-  color: #fbbf24;
-  font-size: 11px;
+  background: #1e1e2f; padding: 1px 5px; border-radius: 3px; color: #fbbf24; font-size: 11px;
 }
 .formula-box strong { color: #e4e4e7; }
+
 .highlight-card {
-  background: #111118;
-  border: 2px solid #6366f1;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 14px;
+  background: #111118; border: 2px solid #6366f1; border-radius: 8px;
+  padding: 16px; margin-bottom: 14px;
 }
 .highlight-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 6px 0;
-  border-bottom: 1px solid #1e1e2f;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 6px 0; border-bottom: 1px solid #1e1e2f;
 }
 .highlight-row:last-child { border-bottom: none; }
 .highlight-key { color: #a1a1aa; font-size: 13px; }
@@ -204,192 +153,378 @@ td input:focus, td select:focus { border-color: #6366f1; }
 .highlight-val.profit { color: #ef4444; }
 .highlight-val.loss { color: #22c55e; }
 .highlight-val.neutral { color: #e4e4e7; }
+
 .leg-detail-box {
-  background: #111118;
-  border: 1px solid #2e2e3f;
-  border-radius: 6px;
-  padding: 14px;
-  margin-top: 10px;
-  font-size: 12px;
-  line-height: 2;
+  background: #111118; border: 1px solid #2e2e3f; border-radius: 6px;
+  padding: 14px; margin-top: 10px; font-size: 12px; line-height: 2;
 }
-.leg-detail-box .leg-line {
-  display: flex;
-  justify-content: space-between;
-  padding: 2px 0;
-}
+.leg-detail-box .leg-line { display: flex; justify-content: space-between; padding: 2px 0; }
 .leg-detail-box .leg-name { color: #a1a1aa; }
 .leg-detail-box .leg-amount { font-weight: 600; }
+
+/* Risk Audit */
+.audit-card {
+  background: #111118; border: 1px solid #2e2e3f; border-radius: 8px;
+  padding: 16px; margin-bottom: 14px;
+}
+.audit-item {
+  display: flex; align-items: flex-start; gap: 8px; padding: 6px 0;
+  border-bottom: 1px solid #1e1e2f;
+}
+.audit-item:last-child { border-bottom: none; }
+.audit-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.audit-content { flex: 1; }
+.audit-title { font-size: 13px; font-weight: 600; }
+.audit-detail { font-size: 11px; color: #71717a; margin-top: 2px; }
+.audit-status {
+  font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 3px; flex-shrink: 0;
+}
+.audit-status.pass { background: rgba(34,197,94,0.15); color: #22c55e; }
+.audit-status.warn { background: rgba(251,191,36,0.15); color: #fbbf24; }
+.audit-status.fail { background: rgba(239,68,68,0.15); color: #ef4444; }
+.audit-status.info { background: rgba(99,102,241,0.15); color: #6366f1; }
+
+/* RR Badge */
+.rr-badge {
+  display: inline-block; padding: 4px 12px; border-radius: 4px;
+  font-size: 14px; font-weight: 700;
+}
+.rr-badge.pass { background: rgba(34,197,94,0.15); color: #22c55e; border: 1px solid #22c55e; }
+.rr-badge.warn { background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid #fbbf24; }
+.rr-badge.fail { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid #ef4444; }
+
+/* McMillan */
+.mcmillan-result {
+  background: #111118; border: 1px solid #2e2e3f; border-radius: 8px;
+  padding: 18px; margin-top: 14px;
+}
+.mcmillan-price {
+  font-size: 28px; font-weight: 800; color: #fbbf24; text-align: center; margin: 12px 0;
+}
+.mcmillan-buffer { text-align: center; font-size: 13px; color: #a1a1aa; margin-bottom: 12px; }
+
+/* Commodity Table */
+.comm-table { width: 100%; font-size: 13px; }
+.comm-table th { text-align: center; padding: 8px; }
+.comm-table td { text-align: center; padding: 6px 8px; }
+
+/* Leg table horizontal scroll on mobile */
+.legs-wrap { overflow-x: auto; }
+.legs-wrap table { min-width: 700px; }
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>期权多腿策略风险计算器</h1>
-  <p class="subtitle">支持任意腿数 · 不同张数 · ETF期权/商品期权通用 · 到期损益 + 当前市场盈亏</p>
+  <h1>期权多腿策略风险计算器 Pro</h1>
+  <p class="subtitle">风险计算 + 麦克米伦天花板 + 风控审核 · 集成三套Python脚本全部功能</p>
 
-  <!-- 快速示例 -->
-  <div class="card">
-    <div class="section-title">快速示例（点击载入实盘数据）</div>
-    <div class="preset-bar">
-      <button class="preset-btn" onclick="loadExample('lh_bullcall')">LH2609 生猪牛差</button>
-      <button class="preset-btn" onclick="loadExample('sr_bullcall')">SR609 白糖牛差</button>
-      <button class="preset-btn" onclick="loadExample('sa_bullcall')">SA609 纯碱牛差</button>
-      <button class="preset-btn" onclick="loadExample('lc_bearput')">LC2609 碳酸锂熊差</button>
-      <button class="preset-btn" onclick="loadExample('etf_bullcall')">50ETF 7月牛差</button>
-    </div>
+  <!-- Tab Navigation -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('calc')">风险计算器</button>
+    <button class="tab" onclick="switchTab('mcmillan')">麦克米伦天花板/地板</button>
+    <button class="tab" onclick="switchTab('ref')">商品合约参考表</button>
   </div>
 
-  <!-- 策略预设 -->
-  <div class="card">
-    <div class="section-title">策略模板（自动填充腿结构）</div>
-    <div class="preset-bar">
-      <button class="preset-btn" onclick="loadPreset('bullcall')">牛市看涨价差</button>
-      <button class="preset-btn" onclick="loadPreset('bearput')">熊市看跌价差</button>
-      <button class="preset-btn" onclick="loadPreset('straddle')">买入跨式</button>
-      <button class="preset-btn" onclick="loadPreset('strangle')">买入宽跨式</button>
-      <button class="preset-btn" onclick="loadPreset('ironcondor')">铁鹰</button>
-      <button class="preset-btn" onclick="loadPreset('butterfly')">蝶式</button>
-      <button class="preset-btn" onclick="loadPreset('collar')">领口</button>
-      <button class="preset-btn" onclick="loadPreset('custom')">自定义（清空）</button>
-    </div>
-  </div>
+  <!-- ==================== TAB 1: 风险计算器 ==================== -->
+  <div id="tab-calc" class="tab-panel active">
 
-  <!-- 合约设置 -->
-  <div class="card">
-    <div class="section-title">合约设置</div>
-    <div class="row">
-      <div class="field">
-        <label>合约类型</label>
-        <select id="contractType" onchange="onContractChange()">
-          <option value="etf">ETF期权 (50ETF/300ETF等)</option>
-          <option value="lh">生猪 LH (16吨/手)</option>
-          <option value="sr">白糖 SR (10吨/手)</option>
-          <option value="sa">纯碱 SA (20吨/手)</option>
-          <option value="lc">碳酸锂 LC (1吨/手)</option>
-          <option value="rb">螺纹钢 RB (10吨/手)</option>
-          <option value="cu">铜 CU (5吨/手)</option>
-          <option value="ru">橡胶 RU (10吨/手)</option>
-          <option value="cf">棉花 CF (5吨/手)</option>
-          <option value="ta">PTA TA (5吨/手)</option>
-          <option value="ma">甲醇 MA (10吨/手)</option>
-          <option value="pg">液化石油气 PG (20吨/手)</option>
-          <option value="custom">自定义乘数</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>合约乘数</label>
-        <input type="number" id="multiplier" value="10000" min="1" style="width:90px" onchange="calculate()">
-      </div>
-      <div class="field">
-        <label>标的现价（可选）</label>
-        <input type="number" id="currentPrice" value="" placeholder="如 3.005" step="any" style="width:120px" onchange="calculate()">
-      </div>
-    </div>
-  </div>
-
-  <!-- 持仓明细 -->
-  <div class="card">
-    <div class="section-title">持仓明细（可添加任意数量的腿）</div>
-    <table id="legsTable">
-      <thead>
-        <tr>
-          <th style="width:30px">#</th>
-          <th style="width:70px">方向</th>
-          <th style="width:80px">类型</th>
-          <th style="width:100px">行权价</th>
-          <th style="width:100px">开仓权利金</th>
-          <th style="width:100px">当前权利金</th>
-          <th style="width:60px">张数</th>
-          <th style="width:50px"></th>
-        </tr>
-      </thead>
-      <tbody id="legsBody"></tbody>
-    </table>
-    <div class="note" style="margin-top:6px">💡 <strong>开仓权利金</strong> = 你买/卖时付/收的价格；<strong>当前权利金</strong> = 现在盘面上看到的价格。填了当前权利金就能算当前浮盈浮亏。</div>
-    <div style="margin-top:10px; display:flex; gap:8px">
-      <button class="btn btn-secondary" onclick="addLeg()">+ 添加腿</button>
-      <button class="btn" onclick="calculate()">计算</button>
-    </div>
-  </div>
-
-  <!-- 结果 -->
-  <div id="highlightSection" style="display:none">
-    <!-- 投入与当前盈亏 醒目区 -->
-    <div class="highlight-card" id="highlightBox"></div>
-  </div>
-
-  <div class="card" id="resultsCard" style="display:none">
-    <div class="section-title">到期损益计算结果</div>
-    <div class="results" id="resultsGrid"></div>
-    <div id="warningBox"></div>
-
-    <!-- 每条腿的成本明细 -->
-    <div class="leg-detail-box" id="legDetailBox"></div>
-
-    <div style="margin-top:16px">
-      <div class="section-title">到期损益图</div>
-      <canvas id="chartCanvas"></canvas>
-      <div class="legend">
-        <div class="legend-item"><div class="legend-dot" style="background:#ef4444;opacity:0.3"></div> 盈利区域</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#22c55e;opacity:0.3"></div> 亏损区域</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#fbbf24"></div> 盈亏平衡点</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#6366f1"></div> 当前价格</div>
-        <div class="legend-item">注：红=盈利，绿=亏损（中国习惯）</div>
+    <!-- Quick Examples -->
+    <div class="card">
+      <div class="section-title">快速示例（点击载入实盘数据）</div>
+      <div class="preset-bar">
+        <button class="preset-btn" onclick="loadExample('lh_bullcall')">LH2609 生猪牛差</button>
+        <button class="preset-btn" onclick="loadExample('sr_bullcall')">SR609 白糖牛差</button>
+        <button class="preset-btn" onclick="loadExample('sa_bullcall')">SA609 纯碱牛差</button>
+        <button class="preset-btn" onclick="loadExample('lc_bearput')">LC2609 碳酸锂熊差</button>
+        <button class="preset-btn" onclick="loadExample('etf_bullcall')">50ETF 7月牛差</button>
       </div>
     </div>
 
-    <div style="margin-top:14px">
-      <div class="section-title">关键价位盈亏明细</div>
-      <table class="detail-table" id="detailTable">
+    <!-- Strategy Templates -->
+    <div class="card">
+      <div class="section-title">策略模板（自动填充腿结构）</div>
+      <div class="preset-bar">
+        <button class="preset-btn" onclick="loadPreset('bullcall')">牛市看涨价差</button>
+        <button class="preset-btn" onclick="loadPreset('bearput')">熊市看跌价差</button>
+        <button class="preset-btn" onclick="loadPreset('straddle')">买入跨式</button>
+        <button class="preset-btn" onclick="loadPreset('strangle')">买入宽跨式</button>
+        <button class="preset-btn" onclick="loadPreset('ironcondor')">铁鹰</button>
+        <button class="preset-btn" onclick="loadPreset('butterfly')">蝶式</button>
+        <button class="preset-btn" onclick="loadPreset('collar')">领口</button>
+        <button class="preset-btn" onclick="loadPreset('custom')">自定义（清空）</button>
+      </div>
+    </div>
+
+    <!-- Contract Settings -->
+    <div class="card">
+      <div class="section-title">合约设置</div>
+      <div class="row">
+        <div class="field">
+          <label>合约类型</label>
+          <select id="contractType" onchange="onContractChange()">
+            <option value="etf">ETF期权 (50ETF/300ETF等)</option>
+            <option value="lh">生猪 LH (16吨/手)</option>
+            <option value="sr">白糖 SR (10吨/手)</option>
+            <option value="sa">纯碱 SA (20吨/手)</option>
+            <option value="lc">碳酸锂 LC (1吨/手)</option>
+            <option value="rb">螺纹钢 RB (10吨/手)</option>
+            <option value="cu">铜 CU (5吨/手)</option>
+            <option value="ru">橡胶 RU (10吨/手)</option>
+            <option value="cf">棉花 CF (5吨/手)</option>
+            <option value="ta">PTA TA (5吨/手)</option>
+            <option value="ma">甲醇 MA (10吨/手)</option>
+            <option value="pg">液化石油气 PG (20吨/手)</option>
+            <option value="custom">自定义乘数</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>合约乘数</label>
+          <input type="number" id="multiplier" value="10000" min="1" style="width:90px" onchange="calculate()">
+        </div>
+        <div class="field">
+          <label>标的现价（可选）</label>
+          <input type="number" id="currentPrice" value="" placeholder="如 3.005" step="any" style="width:120px" onchange="calculate()">
+        </div>
+        <div class="field">
+          <label>使用盘口价（买一/卖一）</label>
+          <select id="useBidAsk" onchange="toggleBidAsk()">
+            <option value="no">不使用，直接填权利金</option>
+            <option value="yes">使用买卖一价算中间价</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Legs Table -->
+    <div class="card">
+      <div class="section-title">持仓明细（可添加任意数量的腿）</div>
+      <div class="legs-wrap">
+        <table id="legsTable">
+          <thead>
+            <tr>
+              <th style="width:30px">#</th>
+              <th style="width:70px">方向</th>
+              <th style="width:80px">类型</th>
+              <th style="width:100px">行权价</th>
+              <th class="bidask-col" style="width:80px;display:none">买一价</th>
+              <th class="bidask-col" style="width:80px;display:none">卖一价</th>
+              <th style="width:100px">开仓权利金</th>
+              <th style="width:100px">当前权利金</th>
+              <th style="width:60px">张数</th>
+              <th style="width:50px"></th>
+            </tr>
+          </thead>
+          <tbody id="legsBody"></tbody>
+        </table>
+      </div>
+      <div class="note" style="margin-top:6px">
+        <strong>开仓权利金</strong> = 买/卖时付/收的价格；<strong>当前权利金</strong> = 现在盘面价（填了可算浮盈浮亏）。<br>
+        <strong>买一价/卖一价</strong> = 开启"使用盘口价"后显示，系统自动算中间价 = (买一+卖一)/2，并检测流动性和零盘口。
+      </div>
+      <div style="margin-top:10px; display:flex; gap:8px">
+        <button class="btn btn-secondary" onclick="addLeg()">+ 添加腿</button>
+        <button class="btn" onclick="calculate()">计算</button>
+      </div>
+    </div>
+
+    <!-- Highlight: Investment + Current P&L -->
+    <div id="highlightSection" style="display:none">
+      <div class="highlight-card" id="highlightBox"></div>
+    </div>
+
+    <!-- Risk Audit Report -->
+    <div id="auditSection" style="display:none">
+      <div class="audit-card" id="auditBox"></div>
+    </div>
+
+    <!-- Results -->
+    <div class="card" id="resultsCard" style="display:none">
+      <div class="section-title">到期损益计算结果</div>
+      <div class="results" id="resultsGrid"></div>
+      <div id="warningBox"></div>
+
+      <div class="leg-detail-box" id="legDetailBox"></div>
+
+      <div style="margin-top:16px">
+        <div class="section-title">到期损益图</div>
+        <canvas id="chartCanvas"></canvas>
+        <div class="legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#ef4444;opacity:0.3"></div> 盈利区域</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#22c55e;opacity:0.3"></div> 亏损区域</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#fbbf24"></div> 盈亏平衡点</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#6366f1"></div> 当前价格</div>
+          <div class="legend-item">注：红=盈利，绿=亏损（中国习惯）</div>
+        </div>
+      </div>
+
+      <div style="margin-top:14px">
+        <div class="section-title">关键价位盈亏明细</div>
+        <table class="detail-table" id="detailTable">
+          <thead><tr><th>标的价格</th><th>组合到期盈亏</th><th>说明</th></tr></thead>
+          <tbody id="detailBody"></tbody>
+        </table>
+      </div>
+
+      <div style="margin-top:14px">
+        <div class="section-title">计算公式说明</div>
+        <div class="formula-box" id="formulaBox"></div>
+      </div>
+
+      <div class="note">
+        * 本计算器计算的是<strong>到期日损益</strong>（时间价值 = 0）。实际持仓中的当前盈亏会因剩余时间价值而不同。<br>
+        * <strong>风控审核报告</strong>自动检测：流动性、零盘口、深实值门槛、盈亏比分级、时间价值分析。<br>
+        * 盈亏比分级标准：RR &lt; 1:0.5 拒绝 / RR &lt; 1:1 警告 / RR >= 1:1 通过。<br>
+        * 深实值门槛（现货替代）：买腿纯时间价值 <= 标的现价 x 1% 才合格。
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB 2: 麦克米伦天花板/地板 ==================== -->
+  <div id="tab-mcmillan" class="tab-panel">
+    <div class="card">
+      <div class="section-title">麦克米伦时间价值法 — 选卖购/卖沽行权价</div>
+      <p style="font-size:13px;color:#a1a1aa;margin-bottom:14px;line-height:1.7">
+        理论基础：市场对短期波动的预期，完全反映在"平值期权的纯时间价值"之中。<br>
+        <strong>天花板</strong>（看多/牛差用）= 现价 + 2 x 平值Call纯时间价值 → 卖购行权价不应超过此值<br>
+        <strong>地板</strong>（看空/熊差用）= 现价 - 2 x 平值Put纯时间价值 → 卖沽行权价不应低于此值
+      </p>
+
+      <div class="row" style="margin-bottom:14px">
+        <div class="field">
+          <label>测算方向</label>
+          <select id="mcDir">
+            <option value="ceiling">天花板（Call / 看多 / 牛差）</option>
+            <option value="floor">地板（Put / 看空 / 熊差）</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>标的现价</label>
+          <input type="number" id="mcPrice" placeholder="如 3.005" step="any" style="width:120px">
+        </div>
+        <div class="field">
+          <label>平值行权价（最接近现价）</label>
+          <input type="number" id="mcStrike" placeholder="如 3.000" step="any" style="width:120px">
+        </div>
+      </div>
+      <div class="row" style="margin-bottom:14px">
+        <div class="field">
+          <label>平值期权 买一价</label>
+          <input type="number" id="mcBid" placeholder="如 0.0500" step="any" style="width:100px">
+        </div>
+        <div class="field">
+          <label>平值期权 卖一价</label>
+          <input type="number" id="mcAsk" placeholder="如 0.0520" step="any" style="width:100px">
+        </div>
+        <div class="field">
+          <label>你计划的卖出行权价</label>
+          <input type="number" id="mcTarget" placeholder="如 3.100" step="any" style="width:120px">
+        </div>
+        <div class="field">
+          <button class="btn" onclick="runMcMillan()">测算</button>
+        </div>
+      </div>
+
+      <div id="mcResult"></div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB 3: 商品合约参考表 ==================== -->
+  <div id="tab-ref" class="tab-panel">
+    <div class="card">
+      <div class="section-title">商品期权合约参考表</div>
+      <p style="font-size:12px;color:#71717a;margin-bottom:10px">仅供速查，合约规格可能随交易所公告调整，下单前务必在券商软件中确认最新乘数。</p>
+      <table class="comm-table">
         <thead>
-          <tr><th>标的价格</th><th>组合到期盈亏</th><th>说明</th></tr>
+          <tr><th>品种</th><th>合约乘数</th><th>报价单位</th><th>交易所</th></tr>
         </thead>
-        <tbody id="detailBody"></tbody>
+        <tbody id="commRefBody"></tbody>
       </table>
-    </div>
-
-    <div style="margin-top:14px">
-      <div class="section-title">计算公式说明</div>
-      <div class="formula-box" id="formulaBox"></div>
-    </div>
-
-    <div class="note">
-      * 本计算器计算的是<strong>到期日损益</strong>（时间价值 = 0）。实际持仓中的当前盈亏会因剩余时间价值而不同。<br>
-      * "最大亏损"和"最大盈利"均指到期时的理论极值。如果有裸卖购（卖出看涨无对冲），最大亏损为无限；如果有裸卖沽，标的价格跌至0时亏损最大但有限。<br>
-      * 盈亏平衡点 = 组合到期损益 = 0 时的标的价格，可能有多个。<br>
-      * <strong>当前市场盈亏</strong> = 各腿当前权利金与开仓权利金的差额 × 乘数 × 张数，反映你现在的真实浮盈浮亏。
     </div>
   </div>
 </div>
 
 <script>
-// ========== 合约乘数预设 ==========
+// ========== Contract Multipliers ==========
 const CONTRACTS = {
   etf: 10000, lh: 16, sr: 10, sa: 20, lc: 1, rb: 10,
   cu: 5, ru: 10, cf: 5, ta: 5, ma: 10, pg: 20, custom: 0
 };
 
-function onContractChange() {
-  const type = document.getElementById('contractType').value;
-  const m = CONTRACTS[type];
-  if (m > 0) document.getElementById('multiplier').value = m;
+// ========== Commodity Reference Table ==========
+const COMMODITY_REF = [
+  ["豆粕", 10, "元/吨", "大商所(DCE)"],
+  ["玉米", 10, "元/吨", "大商所(DCE)"],
+  ["铁矿石", 100, "元/吨", "大商所(DCE)"],
+  ["生猪", 16, "元/吨", "大商所(DCE)"],
+  ["白糖", 10, "元/吨", "郑商所(CZCE)"],
+  ["棉花", 5, "元/吨", "郑商所(CZCE)"],
+  ["PTA", 5, "元/吨", "郑商所(CZCE)"],
+  ["甲醇", 10, "元/吨", "郑商所(CZCE)"],
+  ["纯碱", 20, "元/吨", "郑商所(CZCE)"],
+  ["沪铜", 5, "元/吨", "上期所(SHFE)"],
+  ["沪铝", 5, "元/吨", "上期所(SHFE)"],
+  ["沪锌", 5, "元/吨", "上期所(SHFE)"],
+  ["黄金", 1000, "元/克", "上期所(SHFE)"],
+  ["橡胶", 10, "元/吨", "上期所(SHFE)"],
+  ["原油", 1000, "元/桶", "能源中心(INE)"],
+];
+
+function renderCommRef() {
+  const tbody = document.getElementById('commRefBody');
+  let html = '';
+  for (const [name, mult, unit, exch] of COMMODITY_REF) {
+    html += `<tr><td>${name}</td><td>${mult} (${unit.split('/')[1]}/手)</td><td>${unit}</td><td>${exch}</td></tr>`;
+  }
+  tbody.innerHTML = html;
+}
+
+// ========== Tab Switching ==========
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', t === event.target);
+  });
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+// ========== Core Engine (from Python calc_option_data) ==========
+function calcOptionData(currentPrice, strike, bid, ask, type) {
+  const mid = (bid + ask) / 2;
+  const intrinsic = type === 'call'
+    ? Math.max(0, currentPrice - strike)
+    : Math.max(0, strike - currentPrice);
+  const pureTV = mid - intrinsic;
+  const spreadRatio = mid > 0 ? (ask - bid) / mid : 0;
+  return { mid, intrinsic, pureTV, spreadRatio };
+}
+
+// ========== RR Grading (from Python check_rr_ratio) ==========
+function checkRRRatio(rr) {
+  if (rr < 0.5) return { status: 'fail', label: '拒绝', msg: `盈亏比 1:${rr.toFixed(2)}，远低于1:0.5最低底线。冒1块赚不到5毛，不值得做。` };
+  if (rr < 1.0) return { status: 'warn', label: '警告', msg: `盈亏比 1:${rr.toFixed(2)}，低于1:1理想底线。能用但不理想，建议调整行权价间距。` };
+  return { status: 'pass', label: '通过', msg: `盈亏比 1:${rr.toFixed(2)}，达到1:1底线。` };
+}
+
+// ========== Bid/Ask Toggle ==========
+function toggleBidAsk() {
+  const useBA = document.getElementById('useBidAsk').value === 'yes';
+  document.querySelectorAll('.bidask-col').forEach(col => {
+    col.style.display = useBA ? '' : 'none';
+  });
+  // Re-render legs to show/hide bid/ask inputs
+  const legs = getLegsRaw();
+  document.getElementById('legsBody').innerHTML = '';
+  legCounter = 0;
+  for (const leg of legs) addLeg(leg);
   calculate();
 }
 
-// ========== 策略模板 ==========
+// ========== Strategy Presets ==========
 const STRATEGIES = {
-  bullcall: [
-    { direction: 'buy', type: 'call' }, { direction: 'sell', type: 'call' }
-  ],
-  bearput: [
-    { direction: 'buy', type: 'put' }, { direction: 'sell', type: 'put' }
-  ],
-  straddle: [
-    { direction: 'buy', type: 'call' }, { direction: 'buy', type: 'put' }
-  ],
-  strangle: [
-    { direction: 'buy', type: 'call' }, { direction: 'buy', type: 'put' }
-  ],
+  bullcall: [{ direction: 'buy', type: 'call' }, { direction: 'sell', type: 'call' }],
+  bearput: [{ direction: 'buy', type: 'put' }, { direction: 'sell', type: 'put' }],
+  straddle: [{ direction: 'buy', type: 'call' }, { direction: 'buy', type: 'put' }],
+  strangle: [{ direction: 'buy', type: 'call' }, { direction: 'buy', type: 'put' }],
   ironcondor: [
     { direction: 'buy', type: 'put' }, { direction: 'sell', type: 'put' },
     { direction: 'sell', type: 'call' }, { direction: 'buy', type: 'call' }
@@ -398,13 +533,11 @@ const STRATEGIES = {
     { direction: 'buy', type: 'call' }, { direction: 'sell', type: 'call', qty: '2' },
     { direction: 'buy', type: 'call' }
   ],
-  collar: [
-    { direction: 'buy', type: 'call' }, { direction: 'sell', type: 'put' }
-  ],
+  collar: [{ direction: 'buy', type: 'call' }, { direction: 'sell', type: 'put' }],
   custom: []
 };
 
-// ========== 实盘示例 ==========
+// ========== Examples ==========
 const EXAMPLES = {
   lh_bullcall: {
     contractType: 'lh', multiplier: 16, currentPrice: 12310,
@@ -443,7 +576,7 @@ const EXAMPLES = {
   }
 };
 
-// ========== 腿管理 ==========
+// ========== Leg Management ==========
 let legCounter = 0;
 
 function addLeg(data = {}) {
@@ -451,6 +584,7 @@ function addLeg(data = {}) {
   const tbody = document.getElementById('legsBody');
   const tr = document.createElement('tr');
   tr.id = `leg-${legCounter}`;
+  const useBA = document.getElementById('useBidAsk')?.value === 'yes';
   tr.innerHTML = `
     <td>${legCounter}</td>
     <td><select onchange="calculate()">
@@ -461,10 +595,12 @@ function addLeg(data = {}) {
       <option value="call" ${data.type === 'call' ? 'selected' : ''}>看涨(购)</option>
       <option value="put" ${data.type === 'put' ? 'selected' : ''}>看跌(沽)</option>
     </select></td>
-    <td><input type="number" step="any" value="${data.strike ?? ''}" placeholder="如 2.900" oninput="calculate()"></td>
-    <td><input type="number" step="any" value="${data.premium ?? ''}" placeholder="如 0.1484" oninput="calculate()" style="color:#fbbf24"></td>
+    <td><input type="number" step="any" value="${data.strike ?? ''}" placeholder="行权价" oninput="calculate()"></td>
+    <td class="bidask-col" style="${useBA ? '' : 'display:none'}"><input type="number" step="any" value="${data.bid ?? ''}" placeholder="买一" oninput="calculate()"></td>
+    <td class="bidask-col" style="${useBA ? '' : 'display:none'}"><input type="number" step="any" value="${data.ask ?? ''}" placeholder="卖一" oninput="calculate()"></td>
+    <td><input type="number" step="any" value="${data.premium ?? ''}" placeholder="权利金" oninput="calculate()" style="color:#fbbf24"></td>
     <td><input type="number" step="any" value="${data.currentPremium ?? ''}" placeholder="盘面价" oninput="calculate()" style="color:#6366f1"></td>
-    <td><input type="number" step="any" value="${data.qty ?? ''}" placeholder="如 150" oninput="calculate()"></td>
+    <td><input type="number" step="any" value="${data.qty ?? ''}" placeholder="张数" oninput="calculate()"></td>
     <td><button class="btn-danger" onclick="removeLeg(${legCounter})">删除</button></td>
   `;
   tbody.appendChild(tr);
@@ -479,10 +615,7 @@ function loadPreset(name) {
   document.getElementById('legsBody').innerHTML = '';
   legCounter = 0;
   const legs = STRATEGIES[name];
-  if (legs.length === 0) {
-    addLeg();
-    return;
-  }
+  if (legs.length === 0) { addLeg(); return; }
   for (const leg of legs) addLeg(leg);
   calculate();
 }
@@ -498,31 +631,41 @@ function loadExample(name) {
   calculate();
 }
 
-// ========== 读取腿数据 ==========
-function getLegs() {
+// ========== Read Leg Data ==========
+function getLegsRaw() {
   const rows = document.querySelectorAll('#legsBody tr');
   const legs = [];
   rows.forEach(row => {
     const selects = row.querySelectorAll('select');
     const inputs = row.querySelectorAll('input[type="number"]');
-    const strike = parseFloat(inputs[0].value);
-    const premium = parseFloat(inputs[1].value);
-    const currentPremium = parseFloat(inputs[2].value);
-    const qty = parseFloat(inputs[3].value);
-    if (!isNaN(strike) && !isNaN(premium) && !isNaN(qty) && qty > 0) {
-      legs.push({
-        direction: selects[0].value,
-        type: selects[1].value,
-        strike, premium,
-        currentPremium: isNaN(currentPremium) ? null : currentPremium,
-        qty
-      });
-    }
+    const useBA = document.getElementById('useBidAsk')?.value === 'yes';
+    let strikeIdx = 0, bidIdx = -1, askIdx = -1, premIdx = 1, curIdx = 2, qtyIdx = 3;
+    if (useBA) { bidIdx = 1; askIdx = 2; premIdx = 3; curIdx = 4; qtyIdx = 5; }
+    const strike = parseFloat(inputs[strikeIdx].value);
+    const bid = useBA ? parseFloat(inputs[bidIdx].value) : NaN;
+    const ask = useBA ? parseFloat(inputs[askIdx].value) : NaN;
+    const premium = parseFloat(inputs[premIdx].value);
+    const currentPremium = parseFloat(inputs[curIdx].value);
+    const qty = parseFloat(inputs[qtyIdx].value);
+    legs.push({
+      direction: selects[0].value,
+      type: selects[1].value,
+      strike: isNaN(strike) ? null : strike,
+      bid: isNaN(bid) ? null : bid,
+      ask: isNaN(ask) ? null : ask,
+      premium: isNaN(premium) ? null : premium,
+      currentPremium: isNaN(currentPremium) ? null : currentPremium,
+      qty: isNaN(qty) ? null : qty
+    });
   });
   return legs;
 }
 
-// ========== 核心计算 ==========
+function getLegs() {
+  return getLegsRaw().filter(l => l.strike !== null && l.qty !== null && l.qty > 0 && (l.premium !== null || (l.bid !== null && l.ask !== null)));
+}
+
+// ========== Core P&L Calculation ==========
 function calcPnL(legs, multiplier, S) {
   let total = 0;
   for (const leg of legs) {
@@ -530,40 +673,50 @@ function calcPnL(legs, multiplier, S) {
       ? Math.max(0, S - leg.strike)
       : Math.max(0, leg.strike - S);
     const sign = leg.direction === 'buy' ? 1 : -1;
-    total += sign * (intrinsic - leg.premium) * multiplier * leg.qty;
+    const premium = leg.effectivePremium;
+    total += sign * (intrinsic - premium) * multiplier * leg.qty;
   }
   return total;
 }
 
-// 计算当前市场盈亏（用当前权利金代替到期内在价值）
 function calcCurrentPnL(legs, multiplier) {
   let total = 0;
   for (const leg of legs) {
     if (leg.currentPremium === null) return null;
     const sign = leg.direction === 'buy' ? 1 : -1;
-    // 买入：当前值 - 开仓成本 = (currentPremium - premium) × M × N
-    // 卖出：开仓收入 - 当前负债 = (premium - currentPremium) × M × N
-    total += sign * (leg.currentPremium - leg.premium) * multiplier * leg.qty;
+    total += sign * (leg.currentPremium - leg.effectivePremium) * multiplier * leg.qty;
   }
   return total;
 }
 
+// ========== Main Calculate ==========
 function calculate() {
-  const legs = getLegs();
-  if (legs.length === 0) {
+  const rawLegs = getLegs();
+  if (rawLegs.length === 0) {
     document.getElementById('resultsCard').style.display = 'none';
     document.getElementById('highlightSection').style.display = 'none';
+    document.getElementById('auditSection').style.display = 'none';
     return;
   }
 
   const multiplier = parseFloat(document.getElementById('multiplier').value) || 1;
   const currentPrice = parseFloat(document.getElementById('currentPrice').value) || null;
+  const useBA = document.getElementById('useBidAsk')?.value === 'yes';
 
-  // 收集所有行权价
+  // Resolve effective premium for each leg (mid if bid/ask, else premium field)
+  const legs = rawLegs.map(leg => {
+    let effPremium = leg.premium;
+    let optData = null;
+    if (useBA && leg.bid !== null && leg.ask !== null) {
+      optData = calcOptionData(currentPrice || 0, leg.strike, leg.bid, leg.ask, leg.type);
+      effPremium = optData.mid;
+    }
+    return { ...leg, effectivePremium: effPremium, optData };
+  });
+
   const strikes = [...new Set(legs.map(l => l.strike))].sort((a, b) => a - b);
   if (strikes.length === 0) return;
 
-  // 计算净头寸
   let netCallQty = 0, netPutQty = 0;
   for (const leg of legs) {
     const sign = leg.direction === 'buy' ? 1 : -1;
@@ -574,7 +727,6 @@ function calculate() {
   const profitUnlimited = netCallQty > 0;
   const lossUnlimited = netCallQty < 0;
 
-  // 价格范围
   const minStrike = strikes[0];
   const maxStrike = strikes[strikes.length - 1];
   const range = Math.max(maxStrike - minStrike, minStrike * 0.1);
@@ -586,18 +738,12 @@ function calculate() {
     priceMax = Math.max(priceMax, currentPrice + range * 0.15);
   }
 
-  // 评估点
   const evalPoints = new Set();
-  evalPoints.add(priceMin);
-  evalPoints.add(priceMax);
-  evalPoints.add(0);
+  evalPoints.add(priceMin); evalPoints.add(priceMax); evalPoints.add(0);
   for (const k of strikes) {
-    evalPoints.add(k);
-    evalPoints.add(k - 0.0001);
-    evalPoints.add(k + 0.0001);
+    evalPoints.add(k); evalPoints.add(k - 0.0001); evalPoints.add(k + 0.0001);
   }
   const sortedPoints = [...evalPoints].sort((a, b) => a - b);
-
   const evalResults = sortedPoints.map(S => ({ S, pnl: calcPnL(legs, multiplier, S) }));
 
   let maxProfit = -Infinity, maxProfitAt = 0;
@@ -607,7 +753,6 @@ function calculate() {
     if (r.pnl < maxLoss) { maxLoss = r.pnl; maxLossAt = r.S; }
   }
 
-  // 盈亏平衡点
   const breakevens = [];
   for (let i = 0; i < evalResults.length - 1; i++) {
     const a = evalResults[i], b = evalResults[i + 1];
@@ -617,27 +762,21 @@ function calculate() {
     }
   }
 
-  // 净成本/收入
   let netCost = 0;
   for (const leg of legs) {
     const sign = leg.direction === 'buy' ? 1 : -1;
-    netCost += sign * leg.premium * multiplier * leg.qty;
+    netCost += sign * leg.effectivePremium * multiplier * leg.qty;
   }
 
-  // 当前价格到期P&L
   let currentPnL = null;
   if (currentPrice) currentPnL = calcPnL(legs, multiplier, currentPrice);
-
-  // 当前市场P&L
   let currentMarketPnL = calcCurrentPnL(legs, multiplier);
 
-  // 风险回报比
   let riskReward = null;
   if (!lossUnlimited && !profitUnlimited && maxLoss < 0 && maxProfit > 0) {
     riskReward = maxProfit / Math.abs(maxLoss);
   }
 
-  // 成本占比（净成本 / 差宽 × 乘数 × 最小张数）
   let costRatio = null;
   if (strikes.length >= 2 && !lossUnlimited) {
     const spreadWidth = maxStrike - minStrike;
@@ -645,14 +784,17 @@ function calculate() {
     costRatio = Math.abs(netCost) / (spreadWidth * multiplier * minQty);
   }
 
-  // 渲染醒目区
+  // Render Highlight
   displayHighlight({
     netCost, maxProfit, maxLoss, currentMarketPnL, currentPrice,
     riskReward, costRatio, profitUnlimited, lossUnlimited,
     legs, multiplier, breakevens
   });
 
-  // 渲染到期结果
+  // Render Risk Audit
+  displayRiskAudit(legs, multiplier, currentPrice, useBA, riskReward, costRatio, netCost, maxProfit, maxLoss);
+
+  // Render Results
   displayResults({
     netCost, maxProfit, maxProfitAt, maxLoss, maxLossAt,
     breakevens, currentPnL, currentPrice, riskReward,
@@ -660,23 +802,17 @@ function calculate() {
     legs, multiplier, strikes, netCallQty, netPutQty
   });
 
-  // 画图
+  // Draw Chart
   drawChart(legs, multiplier, breakevens, currentPrice, currentPnL,
-            maxProfit, maxLoss, priceMin, priceMax,
-            profitUnlimited, lossUnlimited);
+    maxProfit, maxLoss, priceMin, priceMax, profitUnlimited, lossUnlimited);
 
-  // 每条腿成本与当前盈亏明细
   displayLegDetail(legs, multiplier, currentMarketPnL);
-
-  // 明细表
   displayDetail(strikes, legs, multiplier, currentPrice);
-
-  // 公式
   displayFormula(legs, multiplier, netCost, maxProfit, maxLoss, breakevens,
-                 profitUnlimited, lossUnlimited, currentMarketPnL, costRatio);
+    profitUnlimited, lossUnlimited, currentMarketPnL, costRatio);
 }
 
-// ========== 格式化 ==========
+// ========== Formatting ==========
 function fmt(n) {
   const abs = Math.abs(n);
   const sign = n < 0 ? '-' : '';
@@ -685,199 +821,247 @@ function fmt(n) {
   if (abs >= 1) return sign + abs.toFixed(1);
   return sign + abs.toFixed(4);
 }
-
 function fmtPrice(n) {
   if (Math.abs(n) < 10) return n.toFixed(3);
   if (Math.abs(n) < 100) return n.toFixed(2);
   return n.toLocaleString('zh-CN', { maximumFractionDigits: 1 });
 }
+function fmtPercent(n) { return n.toFixed(1) + '%'; }
 
-function fmtPercent(n) {
-  return n.toFixed(1) + '%';
-}
-
-// ========== 醒目区：投入 + 当前盈亏 ==========
+// ========== Highlight Display ==========
 function displayHighlight(d) {
   document.getElementById('highlightSection').style.display = 'block';
   const box = document.getElementById('highlightBox');
+  let html = '<div style="font-size:14px;font-weight:700;color:#6366f1;margin-bottom:8px">投入与当前盈亏</div>';
 
-  let html = '<div style="font-size:14px;font-weight:700;color:#6366f1;margin-bottom:8px">💰 投入与当前盈亏</div>';
-
-  // 总投入
-  const isCost = d.netCost > 0;
   const costVal = Math.abs(d.netCost);
-  html += `<div class="highlight-row">
-    <span class="highlight-key">总投入（最大亏损）</span>
-    <span class="highlight-val loss">${fmt(costVal)} 元</span>
-  </div>`;
+  html += `<div class="highlight-row"><span class="highlight-key">总投入（最大亏损）</span><span class="highlight-val loss">${fmt(costVal)} 元</span></div>`;
 
-  // 每条腿成本明细
   for (const leg of d.legs) {
     const dir = leg.direction === 'buy' ? '买' : '卖';
     const typ = leg.type === 'call' ? '购' : '沽';
     const sign = leg.direction === 'buy' ? '-' : '+';
-    const amt = leg.premium * d.multiplier * leg.qty;
-    html += `<div class="highlight-row" style="font-size:12px">
-      <span class="highlight-key" style="color:#71717a">${dir}${typ} ${fmtPrice(leg.strike)} ×${leg.qty}</span>
-      <span class="highlight-val" style="font-size:14px;color:${leg.direction === 'buy' ? '#22c55e' : '#ef4444'}">${sign}${fmt(amt)} 元</span>
-    </div>`;
+    const amt = leg.effectivePremium * d.multiplier * leg.qty;
+    html += `<div class="highlight-row" style="font-size:12px"><span class="highlight-key" style="color:#71717a">${dir}${typ} ${fmtPrice(leg.strike)} x${leg.qty}</span><span class="highlight-val" style="font-size:14px;color:${leg.direction === 'buy' ? '#22c55e' : '#ef4444'}">${sign}${fmt(amt)} 元</span></div>`;
   }
 
   html += '<div style="border-top:1px solid #2e2e3f;margin:6px 0"></div>';
 
-  // 当前市场盈亏
   if (d.currentMarketPnL !== null) {
     const cls = d.currentMarketPnL >= 0 ? 'profit' : 'loss';
     const sign = d.currentMarketPnL >= 0 ? '+' : '';
-    html += `<div class="highlight-row">
-      <span class="highlight-key">🔥 当前市场盈亏（浮盈浮亏）</span>
-      <span class="highlight-val ${cls}">${sign}${fmt(d.currentMarketPnL)} 元</span>
-    </div>`;
-
-    // 占总投入的比例
+    html += `<div class="highlight-row"><span class="highlight-key">当前市场盈亏（浮盈浮亏）</span><span class="highlight-val ${cls}">${sign}${fmt(d.currentMarketPnL)} 元</span></div>`;
     const pct = Math.abs(d.currentMarketPnL) / costVal * 100;
     const direction = d.currentMarketPnL >= 0 ? '盈利' : '亏损';
-    html += `<div class="highlight-row" style="font-size:12px">
-      <span class="highlight-key" style="color:#71717a">占总投入</span>
-      <span class="highlight-val" style="font-size:14px;color:${cls}">${direction} ${fmtPercent(pct)}</span>
-    </div>`;
-
-    // 如果当前亏损，还要显示"到期若价格不变"对比
+    html += `<div class="highlight-row" style="font-size:12px"><span class="highlight-key" style="color:#71717a">占总投入</span><span class="highlight-val" style="font-size:14px;color:${cls === 'profit' ? '#ef4444' : '#22c55e'}">${direction} ${fmtPercent(pct)}</span></div>`;
     if (d.currentPrice && d.currentMarketPnL < 0) {
       const expirationPnL = calcPnL(d.legs, d.multiplier, d.currentPrice);
       if (expirationPnL > d.currentMarketPnL) {
-        html += `<div class="highlight-row" style="font-size:12px">
-          <span class="highlight-key" style="color:#71717a">到期若价格不变（theta帮赚）</span>
-          <span class="highlight-val profit" style="font-size:14px">${expirationPnL >= 0 ? '+' : ''}${fmt(expirationPnL)} 元</span>
-        </div>`;
-        html += `<div class="highlight-row" style="font-size:12px">
-          <span class="highlight-key" style="color:#71717a">theta可帮你赚回</span>
-          <span class="highlight-val profit" style="font-size:14px">+${fmt(expirationPnL - d.currentMarketPnL)} 元</span>
-        </div>`;
+        html += `<div class="highlight-row" style="font-size:12px"><span class="highlight-key" style="color:#71717a">到期若价格不变（theta帮赚）</span><span class="highlight-val profit" style="font-size:14px">${expirationPnL >= 0 ? '+' : ''}${fmt(expirationPnL)} 元</span></div>`;
+        html += `<div class="highlight-row" style="font-size:12px"><span class="highlight-key" style="color:#71717a">theta可帮你赚回</span><span class="highlight-val profit" style="font-size:14px">+${fmt(expirationPnL - d.currentMarketPnL)} 元</span></div>`;
       }
     }
   } else {
-    html += `<div class="highlight-row">
-      <span class="highlight-key">🔥 当前市场盈亏</span>
-      <span class="highlight-val neutral" style="font-size:14px">未填当前权利金</span>
-    </div>`;
+    html += `<div class="highlight-row"><span class="highlight-key">当前市场盈亏</span><span class="highlight-val neutral" style="font-size:14px">未填当前权利金</span></div>`;
   }
 
   html += '<div style="border-top:1px solid #2e2e3f;margin:6px 0"></div>';
 
-  // 最大盈利
-  if (d.profitUnlimited) {
-    html += `<div class="highlight-row">
-      <span class="highlight-key">最大盈利（到期）</span>
-      <span class="highlight-val profit">无限</span>
-    </div>`;
-  } else {
-    html += `<div class="highlight-row">
-      <span class="highlight-key">最大盈利（到期）</span>
-      <span class="highlight-val profit">+${fmt(d.maxProfit)} 元</span>
-    </div>`;
-  }
-
-  // 风险回报比
+  // RR with grading badge
   if (d.riskReward !== null) {
-    html += `<div class="highlight-row">
-      <span class="highlight-key">风险回报比</span>
-      <span class="highlight-val ${d.riskReward >= 1 ? 'profit' : 'warning'}">1 : ${d.riskReward.toFixed(2)}</span>
-    </div>`;
+    const rrCheck = checkRRRatio(d.riskReward);
+    html += `<div class="highlight-row"><span class="highlight-key">风险回报比</span><span><span class="rr-badge ${rrCheck.status}">1 : ${d.riskReward.toFixed(2)} ${rrCheck.label}</span></span></div>`;
   }
 
-  // 成本占比
+  if (d.profitUnlimited) {
+    html += `<div class="highlight-row"><span class="highlight-key">最大盈利（到期）</span><span class="highlight-val profit">无限</span></div>`;
+  } else {
+    html += `<div class="highlight-row"><span class="highlight-key">最大盈利（到期）</span><span class="highlight-val profit">+${fmt(d.maxProfit)} 元</span></div>`;
+  }
+
   if (d.costRatio !== null) {
-    html += `<div class="highlight-row">
-      <span class="highlight-key">成本占比（净成本/差宽）</span>
-      <span class="highlight-val ${d.costRatio > 0.5 ? 'warning' : 'neutral'}">${fmtPercent(d.costRatio * 100)}</span>
-    </div>`;
+    html += `<div class="highlight-row"><span class="highlight-key">成本占比（净成本/差宽）</span><span class="highlight-val ${d.costRatio > 0.5 ? 'warning' : 'neutral'}">${fmtPercent(d.costRatio * 100)}</span></div>`;
   }
 
-  // 盈亏平衡
   if (d.breakevens.length > 0) {
-    html += `<div class="highlight-row">
-      <span class="highlight-key">盈亏平衡点</span>
-      <span class="highlight-val neutral">${d.breakevens.map(be => fmtPrice(be)).join(' / ')}</span>
-    </div>`;
+    html += `<div class="highlight-row"><span class="highlight-key">盈亏平衡点</span><span class="highlight-val neutral">${d.breakevens.map(be => fmtPrice(be)).join(' / ')}</span></div>`;
   }
 
   box.innerHTML = html;
 }
 
-// ========== 到期结果展示 ==========
+// ========== Risk Audit Report (NEW - from Python scripts) ==========
+function displayRiskAudit(legs, multiplier, currentPrice, useBA, riskReward, costRatio, netCost, maxProfit, maxLoss) {
+  document.getElementById('auditSection').style.display = 'block';
+  const box = document.getElementById('auditBox');
+  let html = '<div style="font-size:14px;font-weight:700;color:#6366f1;margin-bottom:10px">风控审核报告</div>';
+  let hasAudit = false;
+
+  // 1. Zero bid check (零盘口拦截)
+  if (useBA) {
+    for (const leg of legs) {
+      if (leg.bid === 0) {
+        const dir = leg.direction === 'buy' ? '买' : '卖';
+        const typ = leg.type === 'call' ? '购' : '沽';
+        html += `<div class="audit-item"><span class="audit-icon">❌</span><div class="audit-content"><div class="audit-title" style="color:#ef4444">零盘口拦截 — ${dir}${typ} ${fmtPrice(leg.strike)}</div><div class="audit-detail">买一价 = 0，无人接盘。${leg.direction === 'buy' ? '你根本买不到该合约' : '卖出后难以平仓'}。请选择有双边报价的合约。</div></div><span class="audit-status fail">拒绝</span></div>`;
+        hasAudit = true;
+      }
+    }
+
+    // 2. Liquidity check (流动性检测)
+    for (const leg of legs) {
+      if (leg.optData && leg.bid > 0 && leg.optData.spreadRatio > 0.05) {
+        const dir = leg.direction === 'buy' ? '买' : '卖';
+        const typ = leg.type === 'call' ? '购' : '沽';
+        html += `<div class="audit-item"><span class="audit-icon">⚠️</span><div class="audit-content"><div class="audit-title" style="color:#fbbf24">流动性警告 — ${dir}${typ} ${fmtPrice(leg.strike)}</div><div class="audit-detail">买卖价差 ${(leg.optData.spreadRatio * 100).toFixed(1)}%，超过5%阈值。中间价可能失真，注意滑点风险。${multiplier > 1 ? '商品期权建议优先选择价差<3%的合约。' : ''}</div></div><span class="audit-status warn">警告</span></div>`;
+        hasAudit = true;
+      }
+    }
+  }
+
+  // 3. Leg status (ITM/ATM/OTM) + Time Value analysis
+  if (currentPrice) {
+    for (const leg of legs) {
+      const dir = leg.direction === 'buy' ? '买' : '卖';
+      const typ = leg.type === 'call' ? '购' : '沽';
+      const intrinsic = leg.type === 'call'
+        ? Math.max(0, currentPrice - leg.strike)
+        : Math.max(0, leg.strike - currentPrice);
+      const premium = leg.effectivePremium;
+      const tv = premium - intrinsic;
+      const tvPct = currentPrice > 0 ? (tv / currentPrice * 100) : 0;
+
+      let statusLabel = '', statusColor = '';
+      if (leg.type === 'call') {
+        if (leg.strike < currentPrice) { const pct = ((currentPrice - leg.strike) / currentPrice * 100); statusLabel = `实值 ${pct.toFixed(1)}%`; statusColor = 'info'; }
+        else if (leg.strike > currentPrice) { const pct = ((leg.strike - currentPrice) / currentPrice * 100); statusLabel = `虚值 ${pct.toFixed(1)}%`; statusColor = 'info'; }
+        else { statusLabel = '平值'; statusColor = 'info'; }
+      } else {
+        if (leg.strike > currentPrice) { const pct = ((leg.strike - currentPrice) / currentPrice * 100); statusLabel = `实值 ${pct.toFixed(1)}%`; statusColor = 'info'; }
+        else if (leg.strike < currentPrice) { const pct = ((currentPrice - leg.strike) / currentPrice * 100); statusLabel = `虚值 ${pct.toFixed(1)}%`; statusColor = 'info'; }
+        else { statusLabel = '平值'; statusColor = 'info'; }
+      }
+
+      html += `<div class="audit-item"><span class="audit-icon">📍</span><div class="audit-content"><div class="audit-title">${dir}${typ} ${fmtPrice(leg.strike)} — ${statusLabel}</div><div class="audit-detail">权利金 ${premium.toFixed(4)} = 内在 ${intrinsic.toFixed(4)} + 时间价值 ${tv.toFixed(4)} (${tvPct.toFixed(2)}%)</div></div><span class="audit-status ${statusColor}">${statusLabel.split(' ')[0]}</span></div>`;
+      hasAudit = true;
+    }
+
+    // 4. Net Time Value (for 2-leg spreads)
+    if (legs.length === 2) {
+      const buyLeg = legs.find(l => l.direction === 'buy');
+      const sellLeg = legs.find(l => l.direction === 'sell');
+      if (buyLeg && sellLeg) {
+        const buyIntrinsic = buyLeg.type === 'call' ? Math.max(0, currentPrice - buyLeg.strike) : Math.max(0, buyLeg.strike - currentPrice);
+        const sellIntrinsic = sellLeg.type === 'call' ? Math.max(0, currentPrice - sellLeg.strike) : Math.max(0, sellLeg.strike - currentPrice);
+        const buyTV = buyLeg.effectivePremium - buyIntrinsic;
+        const sellTV = sellLeg.effectivePremium - sellIntrinsic;
+        const netTV = buyTV - sellTV;
+        const netTVPct = currentPrice > 0 ? (netTV / currentPrice * 100) : 0;
+
+        let tvStatus = 'pass', tvIcon = '✅', tvLabel = 'Theta友好';
+        if (netTVPct > 5) { tvStatus = 'fail'; tvIcon = '❌'; tvLabel = 'TV过高'; }
+        else if (netTVPct > 2) { tvStatus = 'warn'; tvIcon = '⚠️'; tvLabel = 'TV中等'; }
+
+        html += `<div class="audit-item"><span class="audit-icon">${tvIcon}</span><div class="audit-content"><div class="audit-title">净时间价值分析</div><div class="audit-detail">买腿TV: ${buyTV.toFixed(4)} | 卖腿TV: ${sellTV.toFixed(4)} | 净TV支出: ${netTV.toFixed(4)} (${netTVPct.toFixed(2)}%)${netTVPct > 5 ? ' — Theta拖累严重，建议等IV回落或换品种' : netTVPct > 2 ? ' — 可接受但不理想' : ' — Theta友好'}</div></div><span class="audit-status ${tvStatus}">${tvLabel}</span></div>`;
+        hasAudit = true;
+      }
+    }
+
+    // 5. Deep ITM threshold (for buy leg - 现货替代检查)
+    const buyLeg = legs.find(l => l.direction === 'buy');
+    if (buyLeg && legs.length === 2) {
+      const intrinsic = buyLeg.type === 'call' ? Math.max(0, currentPrice - buyLeg.strike) : Math.max(0, buyLeg.strike - currentPrice);
+      const tv = buyLeg.effectivePremium - intrinsic;
+      const threshold = currentPrice * 0.01;
+      const isITM = buyLeg.type === 'call' ? buyLeg.strike < currentPrice : buyLeg.strike > currentPrice;
+
+      if (isITM) {
+        if (tv <= threshold) {
+          html += `<div class="audit-item"><span class="audit-icon">✅</span><div class="audit-content"><div class="audit-title">深实值门槛（现货替代）</div><div class="audit-detail">买腿纯时间价值 ${tv.toFixed(4)} <= 现价1%阈值 ${threshold.toFixed(4)}，合格现货替代品</div></div><span class="audit-status pass">合格</span></div>`;
+        } else {
+          html += `<div class="audit-item"><span class="audit-icon">⚠️</span><div class="audit-content"><div class="audit-title">深实值门槛（现货替代）</div><div class="audit-detail">买腿纯时间价值 ${tv.toFixed(4)} > 现价1%阈值 ${threshold.toFixed(4)}，不够深。若做现货替代建议换更深实值；若搏方向(标准牛/熊差)则无此门槛。</div></div><span class="audit-status warn">偏深</span></div>`;
+        }
+        hasAudit = true;
+      }
+    }
+  }
+
+  // 6. RR Grading (盈亏比分级审核)
+  if (riskReward !== null) {
+    const rrCheck = checkRRRatio(riskReward);
+    const icon = rrCheck.status === 'pass' ? '✅' : rrCheck.status === 'warn' ? '⚠️' : '❌';
+    html += `<div class="audit-item"><span class="audit-icon">${icon}</span><div class="audit-content"><div class="audit-title">盈亏比分级审核</div><div class="audit-detail">${rrCheck.msg} | 标准: RR<0.5拒绝 / RR<1.0警告 / RR>=1.0通过</div></div><span class="audit-status ${rrCheck.status}">${rrCheck.label}</span></div>`;
+    hasAudit = true;
+  }
+
+  // 7. Sell leg deviation check (偏离检测)
+  if (currentPrice && legs.length === 2) {
+    const sellLeg = legs.find(l => l.direction === 'sell');
+    if (sellLeg) {
+      const devPct = Math.abs(sellLeg.strike - currentPrice) / currentPrice;
+      if (devPct > 0.05) {
+        html += `<div class="audit-item"><span class="audit-icon">⚠️</span><div class="audit-content"><div class="audit-title">卖腿偏离警告</div><div class="audit-detail">卖出行权价偏离现价 ${(devPct * 100).toFixed(1)}%，超过5%推荐范围。偏离太远收租太少，防御极弱。</div></div><span class="audit-status warn">偏离</span></div>`;
+        hasAudit = true;
+      }
+    }
+  }
+
+  // 8. Cost ratio assessment
+  if (costRatio !== null) {
+    let crStatus = 'pass', crIcon = '✅', crMsg = '赔率良好';
+    if (costRatio > 0.6) { crStatus = 'fail'; crIcon = '❌'; crMsg = '赔率极差'; }
+    else if (costRatio > 0.4) { crStatus = 'warn'; crIcon = '⚠️'; crMsg = '赔率一般'; }
+    html += `<div class="audit-item"><span class="audit-icon">${crIcon}</span><div class="audit-content"><div class="audit-title">成本占比评估</div><div class="audit-detail">净成本占差宽 ${fmtPercent(costRatio * 100)}。${costRatio > 0.6 ? '成本太高，赔率极差，不值得做' : costRatio > 0.4 ? '能用但不理想' : '赔率良好'}。参考: <40%好 / 40-60%一般 / >60%差</div></div><span class="audit-status ${crStatus}">${crMsg}</span></div>`;
+    hasAudit = true;
+  }
+
+  if (!hasAudit) {
+    html += '<div style="color:#71717a;font-size:13px;text-align:center;padding:10px">填入标的现价和盘口数据后显示完整审核报告</div>';
+  }
+
+  box.innerHTML = html;
+}
+
+// ========== Results Display ==========
 function displayResults(d) {
   document.getElementById('resultsCard').style.display = 'block';
   const grid = document.getElementById('resultsGrid');
   const isCost = d.netCost > 0;
   let html = '';
 
-  html += `<div class="result-card">
-    <div class="result-label">${isCost ? '净成本（总投入）' : '净收入（收取权利金）'}</div>
-    <div class="result-value neutral">${isCost ? '-' : '+'}${fmt(Math.abs(d.netCost))} 元</div>
-    <div class="result-detail">${d.legs.length} 条腿 · 乘数 ${d.multiplier}</div>
-  </div>`;
+  html += `<div class="result-card"><div class="result-label">${isCost ? '净成本（总投入）' : '净收入（收取权利金）'}</div><div class="result-value neutral">${isCost ? '-' : '+'}${fmt(Math.abs(d.netCost))} 元</div><div class="result-detail">${d.legs.length} 条腿 · 乘数 ${d.multiplier}</div></div>`;
 
   if (d.lossUnlimited) {
-    html += `<div class="result-card">
-      <div class="result-label">最大亏损（到期）</div>
-      <div class="result-value loss">无限</div>
-      <div class="result-detail">标的上涨时亏损无上限</div>
-    </div>`;
+    html += `<div class="result-card"><div class="result-label">最大亏损（到期）</div><div class="result-value loss">无限</div><div class="result-detail">标的上涨时亏损无上限</div></div>`;
   } else {
-    html += `<div class="result-card">
-      <div class="result-label">最大亏损（到期）</div>
-      <div class="result-value loss">${fmt(Math.abs(d.maxLoss))} 元</div>
-      <div class="result-detail">标的 = ${fmtPrice(d.maxLossAt)}</div>
-    </div>`;
+    html += `<div class="result-card"><div class="result-label">最大亏损（到期）</div><div class="result-value loss">${fmt(Math.abs(d.maxLoss))} 元</div><div class="result-detail">标的 = ${fmtPrice(d.maxLossAt)}</div></div>`;
   }
 
   if (d.profitUnlimited) {
-    html += `<div class="result-card">
-      <div class="result-label">最大盈利（到期）</div>
-      <div class="result-value profit">无限</div>
-      <div class="result-detail">标的上涨时盈利无上限</div>
-    </div>`;
+    html += `<div class="result-card"><div class="result-label">最大盈利（到期）</div><div class="result-value profit">无限</div><div class="result-detail">标的上涨时盈利无上限</div></div>`;
   } else {
-    html += `<div class="result-card">
-      <div class="result-label">最大盈利（到期）</div>
-      <div class="result-value profit">${fmt(d.maxProfit)} 元</div>
-      <div class="result-detail">标的 = ${fmtPrice(d.maxProfitAt)}</div>
-    </div>`;
+    html += `<div class="result-card"><div class="result-label">最大盈利（到期）</div><div class="result-value profit">${fmt(d.maxProfit)} 元</div><div class="result-detail">标的 = ${fmtPrice(d.maxProfitAt)}</div></div>`;
   }
 
-  let beHtml = d.breakevens.length === 0
-    ? '<span style="color:#71717a;font-size:13px">无</span>'
-    : d.breakevens.map(be => `<span class="be-tag">${fmtPrice(be)}</span>`).join('');
-  html += `<div class="result-card">
-    <div class="result-label">盈亏平衡点</div>
-    <div class="breakeven-list" style="margin-top:4px">${beHtml}</div>
-    <div class="result-detail">${d.breakevens.length} 个</div>
-  </div>`;
+  let beHtml = d.breakevens.length === 0 ? '<span style="color:#71717a;font-size:13px">无</span>' : d.breakevens.map(be => `<span class="be-tag">${fmtPrice(be)}</span>`).join('');
+  html += `<div class="result-card"><div class="result-label">盈亏平衡点</div><div class="breakeven-list" style="margin-top:4px">${beHtml}</div><div class="result-detail">${d.breakevens.length} 个</div></div>`;
 
   if (d.currentPnL !== null) {
     const cls = d.currentPnL >= 0 ? 'profit' : 'loss';
     const sign = d.currentPnL >= 0 ? '+' : '';
-    html += `<div class="result-card">
-      <div class="result-label">到期盈亏（若价格不变）</div>
-      <div class="result-value ${cls}">${sign}${fmt(d.currentPnL)} 元</div>
-      <div class="result-detail">现价 = ${fmtPrice(d.currentPrice)}</div>
-    </div>`;
+    html += `<div class="result-card"><div class="result-label">到期盈亏（若价格不变）</div><div class="result-value ${cls}">${sign}${fmt(d.currentPnL)} 元</div><div class="result-detail">现价 = ${fmtPrice(d.currentPrice)}</div></div>`;
   }
 
   if (d.riskReward !== null) {
-    html += `<div class="result-card">
-      <div class="result-label">风险回报比</div>
-      <div class="result-value neutral">1 : ${d.riskReward.toFixed(2)}</div>
-      <div class="result-detail">最大盈利 / 最大亏损</div>
-    </div>`;
+    const rrCheck = checkRRRatio(d.riskReward);
+    html += `<div class="result-card"><div class="result-label">风险回报比</div><div class="result-value ${rrCheck.status === 'pass' ? 'profit' : rrCheck.status === 'warn' ? 'warning' : 'loss'}">1 : ${d.riskReward.toFixed(2)}</div><div class="result-detail">${rrCheck.label}</div></div>`;
   }
 
   grid.innerHTML = html;
 
   let warn = '';
   if (d.lossUnlimited) {
-    warn += '<div class="warning">⚠️ <strong>无限风险</strong>：此组合在标的上涨时亏损无上限。可能存在裸卖购（卖出看涨期权但没有买入对冲）。请务必确认你了解这个风险。</div>';
+    warn += '<div class="warning">⚠️ <strong>无限风险</strong>：此组合在标的上涨时亏损无上限。可能存在裸卖购。请务必确认你了解这个风险。</div>';
   }
   if (d.netPutQty < 0) {
     const lossAt0 = calcPnL(d.legs, d.multiplier, 0);
@@ -888,7 +1072,7 @@ function displayResults(d) {
   document.getElementById('warningBox').innerHTML = warn;
 }
 
-// ========== 每条腿成本明细 ==========
+// ========== Leg Detail Display ==========
 function displayLegDetail(legs, multiplier, currentMarketPnL) {
   const box = document.getElementById('legDetailBox');
   let html = '<div style="font-size:13px;font-weight:700;color:#6366f1;margin-bottom:6px">每条腿成本与当前盈亏明细</div>';
@@ -896,58 +1080,44 @@ function displayLegDetail(legs, multiplier, currentMarketPnL) {
   for (const leg of legs) {
     const dir = leg.direction === 'buy' ? '买' : '卖';
     const typ = leg.type === 'call' ? '购' : '沽';
-    const sign = leg.direction === 'buy' ? -1 : 1; // buy = pay = negative, sell = receive = positive
-    const openAmt = leg.premium * multiplier * leg.qty;
+    const openAmt = leg.effectivePremium * multiplier * leg.qty;
     const hasCurrent = leg.currentPremium !== null;
     const curAmt = hasCurrent ? leg.currentPremium * multiplier * leg.qty : null;
-    const legPnL = hasCurrent ? (leg.currentPremium - leg.premium) * multiplier * leg.qty * (leg.direction === 'buy' ? -1 : 1) : null;
+    const legPnL = hasCurrent ? (leg.currentPremium - leg.effectivePremium) * multiplier * leg.qty * (leg.direction === 'buy' ? 1 : -1) : null;
 
     html += `<div style="border-top:1px solid #2e2e3f;padding:4px 0">`;
-    html += `<div class="leg-line"><span class="leg-name">${dir}${typ} ${fmtPrice(leg.strike)} ×${leg.qty}张</span>`;
-
+    html += `<div class="leg-line"><span class="leg-name">${dir}${typ} ${fmtPrice(leg.strike)} x${leg.qty}张</span>`;
     if (leg.direction === 'buy') {
       html += `<span class="leg-amount" style="color:#22c55e">开仓付 ${fmt(openAmt)} 元</span>`;
     } else {
       html += `<span class="leg-amount" style="color:#ef4444">开仓收 ${fmt(openAmt)} 元</span>`;
     }
     html += `</div>`;
-
     if (hasCurrent) {
       if (leg.direction === 'buy') {
-        html += `<div class="leg-line"><span class="leg-name" style="color:#6366f1">当前市值</span>`;
-        html += `<span class="leg-amount" style="color:#6366f1">${fmt(curAmt)} 元</span></div>`;
-        html += `<div class="leg-line"><span class="leg-name">单腿盈亏</span>`;
-        const cls = legPnL >= 0 ? '#ef4444' : '#22c55e';
-        html += `<span class="leg-amount" style="color:${cls}">${legPnL >= 0 ? '+' : ''}${fmt(legPnL)} 元</span></div>`;
+        html += `<div class="leg-line"><span class="leg-name" style="color:#6366f1">当前市值</span><span class="leg-amount" style="color:#6366f1">${fmt(curAmt)} 元</span></div>`;
       } else {
-        html += `<div class="leg-line"><span class="leg-name" style="color:#6366f1">当前负债</span>`;
-        html += `<span class="leg-amount" style="color:#6366f1">${fmt(curAmt)} 元</span></div>`;
-        html += `<div class="leg-line"><span class="leg-name">单腿盈亏</span>`;
-        const cls = legPnL >= 0 ? '#ef4444' : '#22c55e';
-        html += `<span class="leg-amount" style="color:${cls}">${legPnL >= 0 ? '+' : ''}${fmt(legPnL)} 元</span></div>`;
+        html += `<div class="leg-line"><span class="leg-name" style="color:#6366f1">当前负债</span><span class="leg-amount" style="color:#6366f1">${fmt(curAmt)} 元</span></div>`;
       }
+      html += `<div class="leg-line"><span class="leg-name">单腿盈亏</span><span class="leg-amount" style="color:${legPnL >= 0 ? '#ef4444' : '#22c55e'}">${legPnL >= 0 ? '+' : ''}${fmt(legPnL)} 元</span></div>`;
     }
     html += `</div>`;
   }
 
   if (currentMarketPnL !== null) {
     html += `<div style="border-top:2px solid #6366f1;padding:6px 0;margin-top:4px">`;
-    html += `<div class="leg-line"><span class="leg-name" style="font-weight:700">组合当前市场盈亏</span>`;
-    const cls = currentMarketPnL >= 0 ? 'profit' : 'loss';
-    html += `<span class="leg-amount" style="font-size:16px;color:#${cls === 'profit' ? 'ef4444' : '22c55e'}">${currentMarketPnL >= 0 ? '+' : ''}${fmt(currentMarketPnL)} 元</span></div>`;
+    html += `<div class="leg-line"><span class="leg-name" style="font-weight:700">组合当前市场盈亏</span><span class="leg-amount" style="font-size:16px;color:${currentMarketPnL >= 0 ? '#ef4444' : '#22c55e'}">${currentMarketPnL >= 0 ? '+' : ''}${fmt(currentMarketPnL)} 元</span></div>`;
     html += `</div>`;
   }
 
   box.innerHTML = html;
 }
 
-// ========== 明细表 ==========
+// ========== Detail Table ==========
 function displayDetail(strikes, legs, multiplier, currentPrice) {
   const tbody = document.getElementById('detailBody');
   const prices = [...strikes];
-  if (currentPrice && !prices.some(p => Math.abs(p - currentPrice) < 0.001)) {
-    prices.push(currentPrice);
-  }
+  if (currentPrice && !prices.some(p => Math.abs(p - currentPrice) < 0.001)) prices.push(currentPrice);
   prices.sort((a, b) => a - b);
 
   let html = '';
@@ -961,86 +1131,70 @@ function displayDetail(strikes, legs, multiplier, currentPrice) {
     } else {
       const matchingLegs = legs.filter(l => Math.abs(l.strike - price) < 0.001);
       if (matchingLegs.length > 0) {
-        label = matchingLegs.map(l =>
-          `${l.direction === 'buy' ? '买' : '卖'}${l.type === 'call' ? '购' : '沽'} ${fmtPrice(l.strike)} ×${l.qty}`
-        ).join('; ');
+        label = matchingLegs.map(l => `${l.direction === 'buy' ? '买' : '卖'}${l.type === 'call' ? '购' : '沽'} ${fmtPrice(l.strike)} x${l.qty}`).join('; ');
       }
     }
-    html += `<tr>
-      <td>${fmtPrice(price)}</td>
-      <td style="color:${color}">${sign}${fmt(pnl)} 元</td>
-      <td style="color:#71717a">${label}</td>
-    </tr>`;
+    html += `<tr><td>${fmtPrice(price)}</td><td style="color:${color}">${sign}${fmt(pnl)} 元</td><td style="color:#71717a">${label}</td></tr>`;
   }
   tbody.innerHTML = html;
 }
 
-// ========== 公式说明 ==========
+// ========== Formula Display ==========
 function displayFormula(legs, M, netCost, maxP, maxL, bes, pU, lU, curPnL, costRatio) {
   let html = '<strong>每条腿的到期损益公式：</strong><br>';
-  html += '买购: <code>(max(0, S - K) - P) × M × N</code>　';
-  html += '卖购: <code>(P - max(0, S - K)) × M × N</code><br>';
-  html += '买沽: <code>(max(0, K - S) - P) × M × N</code>　';
-  html += '卖沽: <code>(P - max(0, K - S)) × M × N</code><br>';
-  html += '其中 S=到期标的价, K=行权价, P=开仓权利金, M=合约乘数, N=张数<br><br>';
+  html += '买购: <code>(max(0, S - K) - P) x M x N</code>　';
+  html += '卖购: <code>(P - max(0, S - K)) x M x N</code><br>';
+  html += '买沽: <code>(max(0, K - S) - P) x M x N</code>　';
+  html += '卖沽: <code>(P - max(0, K - S)) x M x N</code><br>';
+  html += 'S=到期标的价, K=行权价, P=权利金, M=乘数, N=张数<br><br>';
 
-  html += '<strong>当前市场盈亏公式：</strong><br>';
-  html += '买: <code>(开仓价 - 当前价) × M × N</code>　';  // wait, this is wrong
-  // Actually: for buy, PnL = (currentPremium - premium) × M × N (negative means loss)
-  // No: if you BUY at premium and current is currentPremium:
-  //   current value = currentPremium × M × N (what you could sell for)
-  //   cost = premium × M × N (what you paid)
-  //   PnL = currentPremium × M × N - premium × M × N = (currentPremium - premium) × M × N
-  html += '买: <code>(当前价 - 开仓价) × M × N</code>　';
-  html += '卖: <code>(开仓价 - 当前价) × M × N</code><br>';
-  html += '当前价 = 盘面权利金，正值=盈利，负值=亏损<br><br>';
+  html += '<strong>中间价计算（使用盘口价时）：</strong><br>';
+  html += '中间价 = <code>(买一价 + 卖一价) / 2</code><br>';
+  html += '内在价值 = <code>max(现价 - 行权价, 0)</code>（Call）或 <code>max(行权价 - 现价, 0)</code>（Put）<br>';
+  html += '纯时间价值 = <code>中间价 - 内在价值</code><br>';
+  html += '价差比率 = <code>(卖一 - 买一) / 中间价</code>，>5%则流动性警告<br><br>';
 
   html += '<strong>本组合计算过程：</strong><br>';
   for (const leg of legs) {
     const dir = leg.direction === 'buy' ? '买' : '卖';
     const typ = leg.type === 'call' ? '购' : '沽';
     const sign = leg.direction === 'buy' ? '-' : '+';
-    const cost = leg.premium * M * leg.qty;
-    html += `${dir}${typ} ${fmtPrice(leg.strike)} @ ${leg.premium} × ${M} × ${leg.qty} = ${sign}${fmt(cost)} 元<br>`;
+    const cost = leg.effectivePremium * M * leg.qty;
+    html += `${dir}${typ} ${fmtPrice(leg.strike)} @ ${leg.effectivePremium.toFixed(4)} x ${M} x ${leg.qty} = ${sign}${fmt(cost)} 元<br>`;
   }
   html += `<br><strong>净${netCost > 0 ? '成本' : '收入'} = ${netCost > 0 ? '-' : '+'}${fmt(Math.abs(netCost))} 元</strong><br>`;
 
   if (lU) {
-    html += '<br><strong>最大亏损 = 无限</strong>（净卖购头寸 > 0，标的上涨时亏损无上限）<br>';
+    html += '<br><strong>最大亏损 = 无限</strong>（净卖购头寸 > 0）<br>';
   } else {
-    html += `<br><strong>最大亏损 = ${fmt(Math.abs(maxL))} 元</strong>（标的 = ${fmtPrice(maxL < 0 ? maxL : 0)} 附近）<br>`;
+    html += `<br><strong>最大亏损 = ${fmt(Math.abs(maxL))} 元</strong><br>`;
   }
-
   if (pU) {
-    html += '<strong>最大盈利 = 无限</strong>（净买购头寸 > 0，标的上涨时盈利无上限）<br>';
+    html += '<strong>最大盈利 = 无限</strong>（净买购头寸 > 0）<br>';
   } else {
-    html += `<strong>最大盈利 = ${fmt(maxP)} 元</strong>（标的 = ${fmtPrice(maxP)} 附近）<br>`;
+    html += `<strong>最大盈利 = ${fmt(maxP)} 元</strong><br>`;
   }
 
   if (costRatio !== null) {
-    html += `<br><strong>成本占比 = ${fmtPercent(costRatio * 100)}</strong>（净成本 / 差宽×乘数×张数）<br>`;
-    html += `赔率参考：成本占比 < 40% → 赔率较好；40-60% → 一般；> 60% → 赔率较差<br>`;
+    html += `<br><strong>成本占比 = ${fmtPercent(costRatio * 100)}</strong>（净成本 / 差宽x乘数x张数）<br>`;
+    html += `赔率参考：<40%好 / 40-60%一般 / >60%差<br>`;
   }
 
   if (curPnL !== null) {
     html += `<br><strong>当前市场盈亏 = ${curPnL >= 0 ? '+' : ''}${fmt(curPnL)} 元</strong><br>`;
-    html += `计算方式：各腿 (当前权利金 - 开仓权利金) × 方向符号 × 乘数 × 张数 加总<br>`;
   }
 
   if (bes.length > 0) {
-    html += `<br><strong>盈亏平衡点</strong>（组合到期 P&L = 0 时的标的价格）：<br>`;
-    bes.forEach((be, i) => {
-      html += `  平衡点 ${i + 1}: <code>S = ${fmtPrice(be)}</code><br>`;
-    });
+    html += `<br><strong>盈亏平衡点</strong>：<br>`;
+    bes.forEach((be, i) => { html += `  平衡点 ${i + 1}: <code>S = ${fmtPrice(be)}</code><br>`; });
   }
 
   document.getElementById('formulaBox').innerHTML = html;
 }
 
-// ========== 画图 ==========
+// ========== Chart Drawing ==========
 function drawChart(legs, multiplier, breakevens, currentPrice, currentPnL,
-                   maxProfit, maxLoss, priceMin, priceMax,
-                   profitUnlimited, lossUnlimited) {
+  maxProfit, maxLoss, priceMin, priceMax, profitUnlimited, lossUnlimited) {
   const canvas = document.getElementById('chartCanvas');
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
@@ -1049,11 +1203,9 @@ function drawChart(legs, multiplier, breakevens, currentPrice, currentPnL,
   canvas.height = 380 * dpr;
   ctx.scale(dpr, dpr);
 
-  const W = rect.width;
-  const H = 380;
+  const W = rect.width, H = 380;
   const m = { top: 25, right: 55, bottom: 45, left: 75 };
-  const cw = W - m.left - m.right;
-  const ch = H - m.top - m.bottom;
+  const cw = W - m.left - m.right, ch = H - m.top - m.bottom;
 
   const N = 400;
   const data = [];
@@ -1063,61 +1215,46 @@ function drawChart(legs, multiplier, breakevens, currentPrice, currentPnL,
   }
 
   let yMin = Infinity, yMax = -Infinity;
-  for (const d of data) {
-    if (d.pnl < yMin) yMin = d.pnl;
-    if (d.pnl > yMax) yMax = d.pnl;
-  }
-  yMin = Math.min(yMin, 0);
-  yMax = Math.max(yMax, 0);
+  for (const d of data) { if (d.pnl < yMin) yMin = d.pnl; if (d.pnl > yMax) yMax = d.pnl; }
+  yMin = Math.min(yMin, 0); yMax = Math.max(yMax, 0);
   const yRange = Math.max(yMax - yMin, 1);
-  yMin -= yRange * 0.08;
-  yMax += yRange * 0.08;
+  yMin -= yRange * 0.08; yMax += yRange * 0.08;
 
   const xS = S => m.left + (S - priceMin) / (priceMax - priceMin) * cw;
   const yS = p => m.top + (yMax - p) / (yMax - yMin) * ch;
 
-  ctx.fillStyle = '#111118';
-  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#111118'; ctx.fillRect(0, 0, W, H);
 
-  ctx.strokeStyle = '#1e1e2f';
-  ctx.lineWidth = 1;
+  ctx.strokeStyle = '#1e1e2f'; ctx.lineWidth = 1;
   for (let i = 0; i <= 6; i++) {
-    const y = m.top + ch * i / 6;
-    const val = yMax - (yMax - yMin) * i / 6;
+    const y = m.top + ch * i / 6; const val = yMax - (yMax - yMin) * i / 6;
     ctx.beginPath(); ctx.moveTo(m.left, y); ctx.lineTo(W - m.right, y); ctx.stroke();
     ctx.fillStyle = '#52525b'; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
     ctx.fillText(fmt(val), m.left - 6, y + 3);
   }
   for (let i = 0; i <= 8; i++) {
-    const x = m.left + cw * i / 8;
-    const val = priceMin + (priceMax - priceMin) * i / 8;
+    const x = m.left + cw * i / 8; const val = priceMin + (priceMax - priceMin) * i / 8;
     ctx.beginPath(); ctx.moveTo(x, m.top); ctx.lineTo(x, H - m.bottom); ctx.stroke();
     ctx.fillStyle = '#52525b'; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
     ctx.fillText(fmtPrice(val), x, H - m.bottom + 16);
   }
 
   const zY = yS(0);
-  ctx.strokeStyle = '#71717a'; ctx.lineWidth = 1.5;
-  ctx.setLineDash([4, 4]);
+  ctx.strokeStyle = '#71717a'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
   ctx.beginPath(); ctx.moveTo(m.left, zY); ctx.lineTo(W - m.right, zY); ctx.stroke();
   ctx.setLineDash([]);
 
-  ctx.fillStyle = 'rgba(239,68,68,0.1)';
-  ctx.beginPath();
+  ctx.fillStyle = 'rgba(239,68,68,0.1)'; ctx.beginPath();
   ctx.moveTo(xS(data[0].S), zY);
   for (const d of data) ctx.lineTo(xS(d.S), yS(Math.max(d.pnl, 0)));
-  ctx.lineTo(xS(data[N].S), zY);
-  ctx.closePath(); ctx.fill();
+  ctx.lineTo(xS(data[N].S), zY); ctx.closePath(); ctx.fill();
 
-  ctx.fillStyle = 'rgba(34,197,94,0.1)';
-  ctx.beginPath();
+  ctx.fillStyle = 'rgba(34,197,94,0.1)'; ctx.beginPath();
   ctx.moveTo(xS(data[0].S), zY);
   for (const d of data) ctx.lineTo(xS(d.S), yS(Math.min(d.pnl, 0)));
-  ctx.lineTo(xS(data[N].S), zY);
-  ctx.closePath(); ctx.fill();
+  ctx.lineTo(xS(data[N].S), zY); ctx.closePath(); ctx.fill();
 
-  ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 2.5;
-  ctx.beginPath();
+  ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 2.5; ctx.beginPath();
   for (let i = 0; i <= N; i++) {
     const x = xS(data[i].S), y = yS(data[i].pnl);
     if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
@@ -1128,8 +1265,7 @@ function drawChart(legs, multiplier, breakevens, currentPrice, currentPnL,
   for (const k of strikes) {
     if (k < priceMin || k > priceMax) continue;
     const x = xS(k);
-    ctx.strokeStyle = '#3f3f46'; ctx.lineWidth = 1;
-    ctx.setLineDash([2, 3]);
+    ctx.strokeStyle = '#3f3f46'; ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
     ctx.beginPath(); ctx.moveTo(x, m.top); ctx.lineTo(x, H - m.bottom); ctx.stroke();
     ctx.setLineDash([]);
     ctx.fillStyle = '#71717a'; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
@@ -1139,44 +1275,153 @@ function drawChart(legs, multiplier, breakevens, currentPrice, currentPnL,
   for (const be of breakevens) {
     if (be < priceMin || be > priceMax) continue;
     const x = xS(be);
-    ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 1;
-    ctx.setLineDash([3, 3]);
+    ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
     ctx.beginPath(); ctx.moveTo(x, m.top); ctx.lineTo(x, H - m.bottom); ctx.stroke();
     ctx.setLineDash([]);
-    ctx.fillStyle = '#fbbf24';
-    ctx.beginPath(); ctx.arc(x, zY, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.arc(x, zY, 4, 0, Math.PI * 2); ctx.fill();
     ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
     ctx.fillText(`BE ${fmtPrice(be)}`, x, H - m.bottom + 30);
   }
 
   if (currentPrice && currentPrice >= priceMin && currentPrice <= priceMax) {
     const x = xS(currentPrice);
-    ctx.strokeStyle = '#6366f1'; ctx.lineWidth = 1.5;
-    ctx.setLineDash([2, 4]);
+    ctx.strokeStyle = '#6366f1'; ctx.lineWidth = 1.5; ctx.setLineDash([2, 4]);
     ctx.beginPath(); ctx.moveTo(x, m.top); ctx.lineTo(x, H - m.bottom); ctx.stroke();
     ctx.setLineDash([]);
     if (currentPnL !== null) {
       const y = yS(currentPnL);
-      ctx.fillStyle = '#6366f1';
-      ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#6366f1'; ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fill();
       ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
       ctx.fillStyle = '#6366f1'; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
       ctx.fillText(`现价 ${fmtPrice(currentPrice)}`, x, m.top - 4);
-      const pnlText = `${currentPnL >= 0 ? '+' : ''}${fmt(currentPnL)}`;
-      ctx.fillText(pnlText, x, H - m.bottom + 30);
+      ctx.fillText(`${currentPnL >= 0 ? '+' : ''}${fmt(currentPnL)}`, x, H - m.bottom + 30);
     }
   }
 
   ctx.fillStyle = '#71717a'; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
   ctx.fillText('标的价格', m.left + cw / 2, H - 8);
-  ctx.save();
-  ctx.translate(16, m.top + ch / 2);
-  ctx.rotate(-Math.PI / 2);
-  ctx.fillText('盈亏 (元)', 0, 0);
-  ctx.restore();
+  ctx.save(); ctx.translate(16, m.top + ch / 2); ctx.rotate(-Math.PI / 2);
+  ctx.fillText('盈亏 (元)', 0, 0); ctx.restore();
 }
 
-// ========== 初始化 ==========
+// ========== McMillan Ceiling/Floor ==========
+function runMcMillan() {
+  const dir = document.getElementById('mcDir').value;
+  const price = parseFloat(document.getElementById('mcPrice').value);
+  const strike = parseFloat(document.getElementById('mcStrike').value);
+  const bid = parseFloat(document.getElementById('mcBid').value);
+  const ask = parseFloat(document.getElementById('mcAsk').value);
+  const target = parseFloat(document.getElementById('mcTarget').value);
+
+  if (isNaN(price) || isNaN(strike) || isNaN(bid) || isNaN(ask)) {
+    document.getElementById('mcResult').innerHTML = '<div class="warning">请填写所有必填字段</div>';
+    return;
+  }
+
+  // Zero bid check
+  if (bid === 0) {
+    document.getElementById('mcResult').innerHTML = '<div class="warning">❌ 买一价为 0！该合约无买方盘口，中间价无法计算。请选择有双边报价的合约。</div>';
+    return;
+  }
+
+  const type = dir === 'ceiling' ? 'call' : 'put';
+  const opt = calcOptionData(price, strike, bid, ask, type);
+  const mid = opt.mid;
+  const intrinsic = opt.intrinsic;
+  const pureTV = opt.pureTV;
+  const spreadRatio = opt.spreadRatio;
+
+  if (pureTV <= 0) {
+    document.getElementById('mcResult').innerHTML = '<div class="warning">❌ 纯时间价值为负或零！你可能选了偏离平值太远的合约，请换更接近平值的合约。</div>';
+    return;
+  }
+
+  const isCommodity = parseFloat(document.getElementById('multiplier')?.value || 10000) > 1;
+  let html = '<div class="mcmillan-result">';
+
+  //盘口解析
+  html += '<div style="font-size:13px;font-weight:600;color:#a1a1aa;margin-bottom:8px">盘口解析</div>';
+  html += `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px"><span style="color:#71717a">实战中间价</span><span style="font-weight:600">${mid.toFixed(4)}</span></div>`;
+  html += `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px"><span style="color:#71717a">内在价值</span><span style="font-weight:600">${intrinsic.toFixed(4)}</span></div>`;
+  html += `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px"><span style="color:#71717a">纯时间价值</span><span style="font-weight:600;color:#fbbf24">${pureTV.toFixed(4)}</span></div>`;
+  html += `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px"><span style="color:#71717a">价差比率</span><span style="font-weight:600;color:${spreadRatio > 0.05 ? '#ef4444' : '#22c55e'}">${(spreadRatio * 100).toFixed(1)}%</span></div>`;
+
+  if (spreadRatio > 0.05) {
+    html += '<div class="warning-yellow">⚠️ 流动性警告：买卖价差超过5%，中间价可能失真。</div>';
+  }
+
+  // Calculation
+  let resultPrice, bufferPct, label, compareOp, compareLabel;
+  if (dir === 'ceiling') {
+    resultPrice = price + 2 * pureTV;
+    bufferPct = (resultPrice - price) / price * 100;
+    label = '麦克米伦天花板';
+    compareOp = '>';
+    compareLabel = '卖购行权价不应超过此值';
+  } else {
+    resultPrice = price - 2 * pureTV;
+    bufferPct = (price - resultPrice) / price * 100;
+    label = '麦克米伦地板';
+    compareOp = '<';
+    compareLabel = '卖沽行权价不应低于此值';
+  }
+
+  html += `<div style="border-top:1px solid #2e2e3f;margin:12px 0;padding-top:12px">`;
+  html += `<div style="text-align:center;font-size:13px;color:#a1a1aa">${label}（市场隐含${dir === 'ceiling' ? '最高' : '最低'}预期价格）</div>`;
+  html += `<div class="mcmillan-price">${fmtPrice(resultPrice)}</div>`;
+  html += `<div class="mcmillan-buffer">较现价 ${dir === 'ceiling' ? '+' : '-'}${bufferPct.toFixed(2)}%</div>`;
+  html += `</div>`;
+
+  // Special warnings
+  if (isCommodity && dir === 'ceiling') {
+    html += '<div class="warning-yellow">⚠️ 商品特别提示：商品价格受供应冲击影响（天气、地缘、物流），实际涨幅可能远超此基准天花板。选卖购行权价时预留额外缓冲。</div>';
+  }
+  if (dir === 'floor') {
+    html += '<div class="warning-yellow">⚠️ Put偏斜提示：部分品种Put因避险需求定价偏贵（IV高于Call），实测地板可能偏保守。</div>';
+    if (isCommodity) {
+      html += '<div class="warning-yellow">⚠️ 商品做空提示：供应恢复可加速下跌，但政策收储也可能瞬间拉涨。做空商品的尾部风险大于做多。</div>';
+    }
+  }
+
+  // Target strike audit
+  if (!isNaN(target)) {
+    html += '<div style="border-top:1px solid #2e2e3f;margin:12px 0;padding-top:12px">';
+    html += '<div style="font-size:13px;font-weight:600;color:#a1a1aa;margin-bottom:8px">卖出行权价审核</div>';
+
+    const withinRange = dir === 'ceiling' ? target <= resultPrice : target >= resultPrice;
+    if (withinRange) {
+      html += '<div class="warning-green">✅ 审核通过：卖出腿位置在' + (dir === 'ceiling' ? '天花板' : '地板') + '以内，逻辑合理。</div>';
+      if (dir === 'ceiling' && target > price) {
+        const safety = (target - price) / price * 100;
+        html += `<div style="font-size:12px;color:#a1a1aa;margin-top:6px">安全边际：标的还有 ${safety.toFixed(2)}% 的上涨空间即可摸到收益天花板。</div>`;
+      } else if (dir === 'floor' && target < price) {
+        const safety = (price - target) / price * 100;
+        html += `<div style="font-size:12px;color:#a1a1aa;margin-top:6px">安全边际：标的需再跌 ${safety.toFixed(2)}% 才会触及你的卖Put收益地板。</div>`;
+      } else {
+        html += `<div style="font-size:12px;color:#fbbf24;margin-top:6px">⚠️ 你卖出的是实值(或平值)期权，已提前锁定部分利润，但${dir === 'ceiling' ? '上行' : '下行'}空间受限。</div>`;
+      }
+    } else {
+      html += '<div class="warning">❌ 拒绝建仓：卖出行权价' + (dir === 'ceiling' ? '过高（远超天花板）' : '过低（低于地板）') + '！大概率' + (dir === 'ceiling' ? '吃不到差价' : '收不到像样权利金') + '。</div>';
+    }
+    html += '</div>';
+  }
+
+  html += '<div style="font-size:12px;color:#52525b;margin-top:10px">📌 本工具只测算卖购/卖沽行权价的合理性，不计算组合盈亏比。做完后请切到「风险计算器」标签页验算账本。</div>';
+  html += '</div>';
+
+  document.getElementById('mcResult').innerHTML = html;
+}
+
+// ========== Contract Change ==========
+function onContractChange() {
+  const type = document.getElementById('contractType').value;
+  const m = CONTRACTS[type];
+  if (m > 0) document.getElementById('multiplier').value = m;
+  calculate();
+}
+
+// ========== Init ==========
+renderCommRef();
 onContractChange();
 loadExample('etf_bullcall');
 
