@@ -719,7 +719,7 @@ function calculate() {
       optData = calcOptionData(currentPrice || 0, leg.strike, leg.bid, leg.ask, leg.type);
       effPremium = optData.mid;
     }
-    return { ...leg, effectivePremium: effPremium, optData };
+    return { ...leg, effectivePremium: effPremium, optData, useBidAsk: useBA };
   });
 
   const strikes = [...new Set(legs.map(l => l.strike))].sort((a, b) => a - b);
@@ -850,7 +850,8 @@ function displayHighlight(d) {
     const typ = leg.type === 'call' ? '购' : '沽';
     const sign = leg.direction === 'buy' ? '-' : '+';
     const amt = leg.effectivePremium * d.multiplier * leg.qty;
-    html += `<div class="highlight-row" style="font-size:12px"><span class="highlight-key" style="color:#71717a">${dir}${typ} ${fmtPrice(leg.strike)} x${leg.qty}</span><span class="highlight-val" style="font-size:14px;color:${leg.direction === 'buy' ? '#22c55e' : '#ef4444'}">${sign}${fmt(amt)} 元</span></div>`;
+    const premiumLabel = leg.useBidAsk ? `(中间价${leg.effectivePremium.toFixed(4)})` : `(权利金${leg.effectivePremium.toFixed(4)})`;
+    html += `<div class="highlight-row" style="font-size:12px"><span class="highlight-key" style="color:#71717a">${dir}${typ} 行权价${fmtPrice(leg.strike)} ${premiumLabel} x${leg.qty}</span><span class="highlight-val" style="font-size:14px;color:${leg.direction === 'buy' ? '#22c55e' : '#ef4444'}">${sign}${fmt(amt)} 元</span></div>`;
   }
 
   html += '<div style="border-top:1px solid #2e2e3f;margin:6px 0"></div>';
