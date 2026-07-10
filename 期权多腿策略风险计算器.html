@@ -240,6 +240,10 @@ td input:focus, td select:focus { border-color: #6366f1; }
       </div>
     </div>
 
+    <!-- McMillan Bridge Banner -->
+    <div id="mcMillanBanner" class="card" style="display:none;padding:10px 16px;border-left:3px solid #6366f1;font-size:13px">
+    </div>
+
     <!-- Strategy Templates -->
     <div class="card">
       <div class="section-title">策略模板（自动填充腿结构）</div>
@@ -487,6 +491,9 @@ function switchTab(name) {
   document.getElementById('tab-' + name).classList.add('active');
 }
 
+// ========== McMillan result bridge (天花板/地板 → 风险计算器) ==========
+let mcMillanData = null; // { type: 'ceiling'|'floor', price: number, sourcePrice: number, bufferPct: number }
+
 // ========== Core Engine (from Python calc_option_data) ==========
 function calcOptionData(currentPrice, strike, bid, ask, type) {
   const mid = (bid + ask) / 2;
@@ -691,6 +698,7 @@ function calcCurrentPnL(legs, multiplier) {
 
 // ========== Main Calculate ==========
 function calculate() {
+  updateMcMillanBanner();
   const rawLegs = getLegs();
   if (rawLegs.length === 0) {
     document.getElementById('resultsCard').style.display = 'none';
@@ -999,6 +1007,30 @@ function displayRiskAudit(legs, multiplier, currentPrice, useBA, riskReward, cos
           html += `<div class="audit-item"><span class="audit-icon">${isOTM ? '🎯' : '⚠️'}</span><div class="audit-content"><div class="audit-title">${depthLabel}</div></div><span class="audit-status ${isOTM ? 'info' : 'warn'}">${isOTM ? '虚值' : '实值'}</span></div>`;
           hasAudit = true;
         }
+      }
+    }
+
+    // 3c. McMillan ceiling/floor audit (天花板/地板审核)
+    if (mcMillanData && legs.length === 2) {
+      const sellLeg = legs.find(l => l.direction === 'sell');
+      if (sellLeg) {
+        const mcmPrice = mcMillanData.price;
+        const isCeiling = mcMillanData.type === 'ceiling';
+        const label = isCeiling ? '天花板' : '地板';
+        const withinRange = isCeiling ? sellLeg.strike <= mcmPrice : sellLeg.strike >= mcmPrice;
+
+        if (withinRange) {
+          const safety = isCeiling
+            ? (sellLeg.strike - currentPrice) / currentPrice * 100
+            : (currentPrice - sellLeg.strike) / currentPrice * 100;
+          html += `<div class="audit-item"><span class="audit-icon">✅</span><div class="audit-content"><div class="audit-title">麦克米伦${label}审核</div><div class="audit-detail">卖出腿 ${fmtPrice(sellLeg.strike)} ${isCeiling ? '≤' : '≥'} ${label} ${fmtPrice(mcmPrice)}，在合理范围内。安全边际 ${safety.toFixed(2)}%${isCeiling ? '（标的还有这么多上涨空间即可摸到收益天花板）' : '（标的需跌这么多才触及收益地板）'}</div></div><span class="audit-status pass">通过</span></div>`;
+        } else {
+          const excess = isCeiling
+            ? (sellLeg.strike - mcmPrice) / mcmPrice * 100
+            : (mcmPrice - sellLeg.strike) / mcmPrice * 100;
+          html += `<div class="audit-item"><span class="audit-icon">❌</span><div class="audit-content"><div class="audit-title" style="color:#ef4444">麦克米伦${label}审核 — 超出</div><div class="audit-detail">卖出腿 ${fmtPrice(sellLeg.strike)} ${isCeiling ? '>' : '<'} ${label} ${fmtPrice(mcmPrice)}，超出 ${excess.toFixed(2)}%！${isCeiling ? '卖购行权价过高，大概率吃不到差价。' : '卖沽行权价过低，收不到像样权利金。'}建议将卖出腿调整到${label}以内。</div></div><span class="audit-status fail">拒绝</span></div>`;
+        }
+        hasAudit = true;
       }
     }
 
@@ -1493,10 +1525,49 @@ function runMcMillan() {
     html += '</div>';
   }
 
+  // Save to global bridge variable
+  mcMillanData = { type: dir, price: resultPrice, sourcePrice: price, bufferPct: bufferPct };
+
   html += '<div style="font-size:12px;color:#52525b;margin-top:10px">📌 本工具只测算卖购/卖沽行权价的合理性，不计算组合盈亏比。做完后请切到「风险计算器」标签页验算账本。</div>';
+  html += `<button class="btn" style="width:100%;margin-top:10px" onclick="carryMcMillanToCalc()">带入风险计算器 →</button>`;
   html += '</div>';
 
   document.getElementById('mcResult').innerHTML = html;
+}
+
+// ========== Bridge: carry McMillan result to risk calculator ==========
+function carryMcMillanToCalc() {
+  switchTab('calc');
+  updateMcMillanBanner();
+  // Auto-fill currentPrice if empty
+  if (mcMillanData) {
+    const priceInput = document.getElementById('currentPrice');
+    if (priceInput && (!priceInput.value || priceInput.value === '')) {
+      priceInput.value = mcMillanData.sourcePrice;
+    }
+  }
+  calculate();
+}
+
+function updateMcMillanBanner() {
+  const banner = document.getElementById('mcMillanBanner');
+  if (!banner) return;
+  if (mcMillanData) {
+    const isCeiling = mcMillanData.type === 'ceiling';
+    const label = isCeiling ? '天花板' : '地板';
+    const icon = isCeiling ? '🔼' : '🔽';
+    const color = isCeiling ? '#ef4444' : '#22c55e';
+    banner.style.display = 'block';
+    banner.innerHTML = `<span style="font-size:16px">${icon}</span> <span style="color:${color};font-weight:700">麦克米伦${label}: ${fmtPrice(mcMillanData.price)}</span> <span style="color:#71717a;font-size:12px">(较现价 ${isCeiling ? '+' : '-'}${mcMillanData.bufferPct.toFixed(2)}%)</span> <span style="color:#52525b;font-size:11px;margin-left:8px">${isCeiling ? '卖购行权价不应超过此值' : '卖沽行权价不应低于此值'}</span> <button onclick="clearMcMillan()" style="background:none;border:none;color:#71717a;cursor:pointer;font-size:14px;margin-left:6px;float:right">✕</button>`;
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+function clearMcMillan() {
+  mcMillanData = null;
+  updateMcMillanBanner();
+  calculate();
 }
 
 // ========== Contract Change ==========
