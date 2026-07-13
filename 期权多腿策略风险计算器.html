@@ -1020,24 +1020,36 @@ function displayRiskAudit(legs, multiplier, currentPrice, useBA, riskReward, cos
     }
 
     // 3c. McMillan ceiling/floor audit (天花板/地板审核)
+    // Auto-detect: sell call → check ceiling; sell put → check floor
     if (mcMillanData && legs.length === 2) {
       const sellLeg = legs.find(l => l.direction === 'sell');
       if (sellLeg) {
         const mcmPrice = mcMillanData.price;
-        const isCeiling = mcMillanData.type === 'ceiling';
-        const label = isCeiling ? '天花板' : '地板';
-        const withinRange = isCeiling ? sellLeg.strike <= mcmPrice : sellLeg.strike >= mcmPrice;
+        const mcmType = mcMillanData.type; // 'ceiling' or 'floor'
+        const needCeiling = sellLeg.type === 'call'; // sell call needs ceiling, sell put needs floor
+        const correctType = needCeiling ? 'ceiling' : 'floor';
+        const correctLabel = needCeiling ? '天花板' : '地板';
+        const sellLabel = sellLeg.type === 'call' ? '购' : '沽';
 
-        if (withinRange) {
-          const safety = isCeiling
-            ? (sellLeg.strike - currentPrice) / currentPrice * 100
-            : (currentPrice - sellLeg.strike) / currentPrice * 100;
-          html += `<div class="audit-item"><span class="audit-icon">✅</span><div class="audit-content"><div class="audit-title">麦克米伦${label}审核</div><div class="audit-detail">卖出腿 ${fmtPrice(sellLeg.strike)} ${isCeiling ? '≤' : '≥'} ${label} ${fmtPrice(mcmPrice)}，在合理范围内。安全边际 ${safety.toFixed(2)}%${isCeiling ? '（标的还有这么多上涨空间即可摸到收益天花板）' : '（标的需跌这么多才触及收益地板）'}</div></div><span class="audit-status pass">通过</span></div>`;
+        if (mcmType !== correctType) {
+          // Data mismatch - show warning instead of wrong audit
+          const wrongLabel = mcmType === 'ceiling' ? '天花板' : '地板';
+          html += `<div class="audit-item"><span class="audit-icon">⚠️</span><div class="audit-content"><div class="audit-title">麦克米伦数据不匹配</div><div class="audit-detail">当前带入的是${wrongLabel}(${fmtPrice(mcmPrice)})，但你的卖出腿是${sellLabel}(Put)。牛差(卖购)应审核天花板，熊差(卖沽)应审核地板。请到麦克米伦标签页切换到${correctLabel}模式重新计算。</div></div><span class="audit-status warn">不匹配</span></div>`;
         } else {
-          const excess = isCeiling
-            ? (sellLeg.strike - mcmPrice) / mcmPrice * 100
-            : (mcmPrice - sellLeg.strike) / mcmPrice * 100;
-          html += `<div class="audit-item"><span class="audit-icon">❌</span><div class="audit-content"><div class="audit-title" style="color:#ef4444">麦克米伦${label}审核 — 超出</div><div class="audit-detail">卖出腿 ${fmtPrice(sellLeg.strike)} ${isCeiling ? '>' : '<'} ${label} ${fmtPrice(mcmPrice)}，超出 ${excess.toFixed(2)}%！${isCeiling ? '卖购行权价过高，大概率吃不到差价。' : '卖沽行权价过低，收不到像样权利金。'}建议将卖出腿调整到${label}以内。</div></div><span class="audit-status fail">拒绝</span></div>`;
+          // Correct data type - apply the check
+          const withinRange = needCeiling ? sellLeg.strike <= mcmPrice : sellLeg.strike >= mcmPrice;
+
+          if (withinRange) {
+            const safety = needCeiling
+              ? (sellLeg.strike - currentPrice) / currentPrice * 100
+              : (currentPrice - sellLeg.strike) / currentPrice * 100;
+            html += `<div class="audit-item"><span class="audit-icon">✅</span><div class="audit-content"><div class="audit-title">麦克米伦${correctLabel}审核</div><div class="audit-detail">卖出${sellLabel} ${fmtPrice(sellLeg.strike)} ${needCeiling ? '≤' : '≥'} ${correctLabel} ${fmtPrice(mcmPrice)}，在合理范围内。安全边际 ${safety.toFixed(2)}%${needCeiling ? '（标的还有这么多上涨空间即可摸到收益天花板）' : '（标的还需跌这么多才触及收益地板）'}</div></div><span class="audit-status pass">通过</span></div>`;
+          } else {
+            const excess = needCeiling
+              ? (sellLeg.strike - mcmPrice) / mcmPrice * 100
+              : (mcmPrice - sellLeg.strike) / mcmPrice * 100;
+            html += `<div class="audit-item"><span class="audit-icon">❌</span><div class="audit-content"><div class="audit-title" style="color:#ef4444">麦克米伦${correctLabel}审核 — 超出</div><div class="audit-detail">卖出${sellLabel} ${fmtPrice(sellLeg.strike)} ${needCeiling ? '>' : '<'} ${correctLabel} ${fmtPrice(mcmPrice)}，超出 ${excess.toFixed(2)}%！${needCeiling ? '卖购行权价过高，大概率吃不到差价。' : '卖沽行权价过低，收不到像样权利金。'}建议将卖出腿调整到${correctLabel}以内。</div></div><span class="audit-status fail">拒绝</span></div>`;
+          }
         }
         hasAudit = true;
       }
