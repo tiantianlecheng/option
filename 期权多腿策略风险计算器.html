@@ -222,7 +222,7 @@ td input:focus, td select:focus { border-color: #6366f1; }
   <div class="tabs">
     <button class="tab active" onclick="switchTab('calc')">风险计算器</button>
     <button class="tab" onclick="switchTab('mcmillan')">麦克米伦天花板/地板</button>
-    <button class="tab" onclick="switchTab('ref')">商品合约参考表</button>
+    <button class="tab" onclick="switchTab('ref')">合约参考表</button>
   </div>
 
   <!-- ==================== TAB 1: 风险计算器 ==================== -->
@@ -242,6 +242,17 @@ td input:focus, td select:focus { border-color: #6366f1; }
 
     <!-- McMillan Bridge Banner -->
     <div id="mcMillanBanner" class="card" style="display:none;padding:10px 16px;border-left:3px solid #6366f1;font-size:13px">
+    </div>
+
+    <!-- Calculation History -->
+    <div id="historySection" class="card" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div class="section-title" style="margin-bottom:0">计算历史记录</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn-danger" onclick="clearHistory()" style="font-size:11px;padding:3px 10px">清空全部</button>
+        </div>
+      </div>
+      <div id="historyList" style="max-height:300px;overflow-y:auto"></div>
     </div>
 
     <!-- Strategy Templates -->
@@ -266,19 +277,74 @@ td input:focus, td select:focus { border-color: #6366f1; }
         <div class="field">
           <label>合约类型</label>
           <select id="contractType" onchange="onContractChange()">
-            <option value="etf">ETF期权 (50ETF/300ETF等)</option>
-            <option value="lh">生猪 LH (16吨/手)</option>
-            <option value="sr">白糖 SR (10吨/手)</option>
-            <option value="sa">纯碱 SA (20吨/手)</option>
-            <option value="lc">碳酸锂 LC (1吨/手)</option>
-            <option value="rb">螺纹钢 RB (10吨/手)</option>
-            <option value="cu">铜 CU (5吨/手)</option>
-            <option value="ru">橡胶 RU (10吨/手)</option>
-            <option value="cf">棉花 CF (5吨/手)</option>
-            <option value="ta">PTA TA (5吨/手)</option>
-            <option value="ma">甲醇 MA (10吨/手)</option>
-            <option value="pg">液化石油气 PG (20吨/手)</option>
-            <option value="custom">自定义乘数</option>
+            <optgroup label="ETF期权 (乘数10000)">
+              <option value="etf50">50ETF (510050)</option>
+              <option value="etf300">沪深300ETF (510300)</option>
+              <option value="etf300sz">沪深300ETF (159919)</option>
+              <option value="etf500">中证500ETF (510500)</option>
+              <option value="etf500sz">中证500ETF (159922)</option>
+              <option value="etfcyb">创业板ETF (159915)</option>
+              <option value="etfsz100">深证100ETF (159901)</option>
+              <option value="etfk50">科创50ETF (588000)</option>
+              <option value="etfk50sz">科创50ETF (588080)</option>
+            </optgroup>
+            <optgroup label="股指期权 (乘数100)">
+              <option value="idx300">沪深300股指 (IO)</option>
+              <option value="idx1000">中证1000股指 (MO)</option>
+              <option value="idx50">上证50股指 (HO)</option>
+            </optgroup>
+            <optgroup label="DCE 大商所">
+              <option value="m">豆粕 m (10吨/手)</option>
+              <option value="c">玉米 c (10吨/手)</option>
+              <option value="i">铁矿石 i (100吨/手)</option>
+              <option value="lh">生猪 lh (16吨/手)</option>
+              <option value="p">棕榈油 p (10吨/手)</option>
+              <option value="y">豆油 y (10吨/手)</option>
+              <option value="a">豆一 a (10吨/手)</option>
+              <option value="l">聚乙烯 l (5吨/手)</option>
+              <option value="v">聚氯乙烯 v (5吨/手)</option>
+              <option value="pp">聚丙烯 pp (5吨/手)</option>
+              <option value="eg">乙二醇 eg (10吨/手)</option>
+              <option value="eb">苯乙烯 eb (5吨/手)</option>
+              <option value="pg">液化石油气 pg (20吨/手)</option>
+              <option value="jm">焦煤 jm (60吨/手)</option>
+              <option value="jd">鸡蛋 jd (10吨/手)</option>
+            </optgroup>
+            <optgroup label="CZCE 郑商所">
+              <option value="sr">白糖 SR (10吨/手)</option>
+              <option value="cf">棉花 CF (5吨/手)</option>
+              <option value="ta">PTA TA (5吨/手)</option>
+              <option value="ma">甲醇 MA (10吨/手)</option>
+              <option value="sa">纯碱 SA (20吨/手)</option>
+              <option value="rm">菜粕 RM (10吨/手)</option>
+              <option value="oi">菜籽油 OI (10吨/手)</option>
+              <option value="ap">苹果 AP (10吨/手)</option>
+              <option value="cj">红枣 CJ (5吨/手)</option>
+              <option value="pk">花生 PK (5吨/手)</option>
+              <option value="fg">玻璃 FG (20吨/手)</option>
+            </optgroup>
+            <optgroup label="SHFE 上期所">
+              <option value="cu">沪铜 CU (5吨/手)</option>
+              <option value="al">沪铝 AL (5吨/手)</option>
+              <option value="zn">沪锌 ZN (5吨/手)</option>
+              <option value="au">黄金 AU (1000克/手)</option>
+              <option value="ag">白银 AG (15千克/手)</option>
+              <option value="rb">螺纹钢 RB (10吨/手)</option>
+              <option value="ru">天然橡胶 RU (10吨/手)</option>
+              <option value="sp">纸浆 SP (10吨/手)</option>
+            </optgroup>
+            <optgroup label="INE 能源中心">
+              <option value="sc">原油 SC (1000桶/手)</option>
+              <option value="bc">国际铜 BC (5吨/手)</option>
+              <option value="nr">20号胶 NR (10吨/手)</option>
+            </optgroup>
+            <optgroup label="GFEX 广期所">
+              <option value="lc">碳酸锂 LC (1吨/手)</option>
+              <option value="si">工业硅 SI (5吨/手)</option>
+            </optgroup>
+            <optgroup label="其他">
+              <option value="custom">自定义乘数</option>
+            </optgroup>
           </select>
         </div>
         <div class="field">
@@ -432,54 +498,149 @@ td input:focus, td select:focus { border-color: #6366f1; }
     </div>
   </div>
 
-  <!-- ==================== TAB 3: 商品合约参考表 ==================== -->
+  <!-- ==================== TAB 3: 合约参考表 ==================== -->
   <div id="tab-ref" class="tab-panel">
-    <div class="card">
-      <div class="section-title">商品期权合约参考表</div>
-      <p style="font-size:12px;color:#71717a;margin-bottom:10px">仅供速查，合约规格可能随交易所公告调整，下单前务必在券商软件中确认最新乘数。</p>
-      <table class="comm-table">
-        <thead>
-          <tr><th>品种</th><th>合约乘数</th><th>报价单位</th><th>交易所</th></tr>
-        </thead>
-        <tbody id="commRefBody"></tbody>
-      </table>
-    </div>
   </div>
 </div>
 
 <script>
-// ========== Contract Multipliers ==========
+// ========== Contract Data ==========
 const CONTRACTS = {
-  etf: 10000, lh: 16, sr: 10, sa: 20, lc: 1, rb: 10,
-  cu: 5, ru: 10, cf: 5, ta: 5, ma: 10, pg: 20, custom: 0
+  // ETF期权 (所有乘数10000)
+  etf50: 10000, etf300: 10000, etf300sz: 10000, etf500: 10000, etf500sz: 10000,
+  etfcyb: 10000, etfsz100: 10000, etfk50: 10000, etfk50sz: 10000,
+  // 股指期权 (乘数100，每点100元)
+  idx300: 100, idx1000: 100, idx50: 100,
+  // DCE 大商所
+  m: 10, c: 10, i: 100, lh: 16, p: 10, y: 10, a: 10, b: 10,
+  l: 5, v: 5, pp: 5, eg: 10, eb: 5, pg: 20, jm: 60, jd: 10, cs: 10,
+  // CZCE 郑商所
+  sr: 10, cf: 5, ta: 5, ma: 10, sa: 20, rm: 10, oi: 10,
+  ap: 10, cj: 5, pk: 5, fg: 20, ur: 20, zc: 100, sf: 5, sm: 5,
+  // SHFE 上期所
+  cu: 5, al: 5, zn: 5, pb: 5, ni: 1, sn: 1,
+  au: 1000, ag: 15, rb: 10, ru: 10, br: 5, fu: 10, bu: 10, sp: 10, ao: 20,
+  // INE 能源中心
+  sc: 1000, bc: 5, nr: 10,
+  // GFEX 广期所
+  lc: 1, si: 5, pc: 1,
+  custom: 0
 };
 
-// ========== Commodity Reference Table ==========
-const COMMODITY_REF = [
-  ["豆粕", 10, "元/吨", "大商所(DCE)"],
-  ["玉米", 10, "元/吨", "大商所(DCE)"],
-  ["铁矿石", 100, "元/吨", "大商所(DCE)"],
-  ["生猪", 16, "元/吨", "大商所(DCE)"],
-  ["白糖", 10, "元/吨", "郑商所(CZCE)"],
-  ["棉花", 5, "元/吨", "郑商所(CZCE)"],
-  ["PTA", 5, "元/吨", "郑商所(CZCE)"],
-  ["甲醇", 10, "元/吨", "郑商所(CZCE)"],
-  ["纯碱", 20, "元/吨", "郑商所(CZCE)"],
-  ["沪铜", 5, "元/吨", "上期所(SHFE)"],
-  ["沪铝", 5, "元/吨", "上期所(SHFE)"],
-  ["沪锌", 5, "元/吨", "上期所(SHFE)"],
-  ["黄金", 1000, "元/克", "上期所(SHFE)"],
-  ["橡胶", 10, "元/吨", "上期所(SHFE)"],
-  ["原油", 1000, "元/桶", "能源中心(INE)"],
+const CONTRACT_NAMES = {
+  etf50: '50ETF', etf300: '沪深300ETF(沪)', etf300sz: '沪深300ETF(深)',
+  etf500: '中证500ETF(沪)', etf500sz: '中证500ETF(深)', etfcyb: '创业板ETF',
+  etfsz100: '深证100ETF', etfk50: '科创50ETF(华夏)', etfk50sz: '科创50ETF(易方达)',
+  idx300: '沪深300股指', idx1000: '中证1000股指', idx50: '上证50股指',
+  m: '豆粕', c: '玉米', i: '铁矿石', lh: '生猪', p: '棕榈油', y: '豆油',
+  a: '豆一', b: '豆二', l: '聚乙烯', v: '聚氯乙烯', pp: '聚丙烯',
+  eg: '乙二醇', eb: '苯乙烯', pg: '液化石油气', jm: '焦煤', jd: '鸡蛋', cs: '玉米淀粉',
+  sr: '白糖', cf: '棉花', ta: 'PTA', ma: '甲醇', sa: '纯碱', rm: '菜粕',
+  oi: '菜籽油', ap: '苹果', cj: '红枣', pk: '花生', fg: '玻璃',
+  ur: '尿素', zc: '动力煤', sf: '硅铁', sm: '锰硅',
+  cu: '沪铜', al: '沪铝', zn: '沪锌', pb: '沪铅', ni: '镍', sn: '锡',
+  au: '黄金', ag: '白银', rb: '螺纹钢', ru: '天然橡胶', br: '丁二烯橡胶',
+  fu: '燃料油', bu: '石油沥青', sp: '纸浆', ao: '氧化铝',
+  sc: '原油', bc: '国际铜', nr: '20号胶',
+  lc: '碳酸锂', si: '工业硅', pc: '多晶硅',
+  custom: '自定义'
+};
+
+// ========== Commodity & ETF Reference Tables ==========
+const REF_SECTIONS = [
+  { title: 'ETF期权（合约单位10000份，最小变动0.0001元）', data: [
+    ['50ETF', '510050', '10000份', '上交所'],
+    ['沪深300ETF(华泰柏瑞)', '510300', '10000份', '上交所'],
+    ['中证500ETF(南方)', '510500', '10000份', '上交所'],
+    ['科创50ETF(华夏)', '588000', '10000份', '上交所'],
+    ['科创50ETF(易方达)', '588080', '10000份', '上交所'],
+    ['沪深300ETF(嘉实)', '159919', '10000份', '深交所'],
+    ['中证500ETF(嘉实)', '159922', '10000份', '深交所'],
+    ['创业板ETF(易方达)', '159915', '10000份', '深交所'],
+    ['深证100ETF(易方达)', '159901', '10000份', '深交所'],
+  ]},
+  { title: '股指期权（合约乘数100，每点100元）', data: [
+    ['沪深300股指', 'IO', '100 (每点100元)', '中金所(CFFEX)'],
+    ['中证1000股指', 'MO', '100 (每点100元)', '中金所(CFFEX)'],
+    ['上证50股指', 'HO', '100 (每点100元)', '中金所(CFFEX)'],
+  ]},
+  { title: 'DCE 大商所 商品期权', data: [
+    ['豆粕 m', '10吨', '0.5元/吨', '大商所(DCE)'],
+    ['玉米 c', '10吨', '0.1元/吨', '大商所(DCE)'],
+    ['铁矿石 i', '100吨', '0.2元/吨', '大商所(DCE)'],
+    ['生猪 lh', '16吨', '0.5元/吨', '大商所(DCE)'],
+    ['棕榈油 p', '10吨', '0.5元/吨', '大商所(DCE)'],
+    ['豆油 y', '10吨', '0.5元/吨', '大商所(DCE)'],
+    ['豆一 a', '10吨', '0.5元/吨', '大商所(DCE)'],
+    ['豆二 b', '10吨', '1元/吨', '大商所(DCE)'],
+    ['聚乙烯 l', '5吨', '1元/吨', '大商所(DCE)'],
+    ['聚氯乙烯 v', '5吨', '1元/吨', '大商所(DCE)'],
+    ['聚丙烯 pp', '5吨', '1元/吨', '大商所(DCE)'],
+    ['乙二醇 eg', '10吨', '0.5元/吨', '大商所(DCE)'],
+    ['苯乙烯 eb', '5吨', '1元/吨', '大商所(DCE)'],
+    ['液化石油气 pg', '20吨', '0.5元/吨', '大商所(DCE)'],
+    ['焦煤 jm', '60吨', '0.5元/吨', '大商所(DCE)'],
+    ['鸡蛋 jd', '10吨', '0.5元/500kg', '大商所(DCE)'],
+    ['玉米淀粉 cs', '10吨', '1元/吨', '大商所(DCE)'],
+  ]},
+  { title: 'CZCE 郑商所 商品期权', data: [
+    ['白糖 SR', '10吨', '0.5元/吨', '郑商所(CZCE)'],
+    ['棉花 CF', '5吨', '0.5元/吨', '郑商所(CZCE)'],
+    ['PTA TA', '5吨', '0.5元/吨', '郑商所(CZCE)'],
+    ['甲醇 MA', '10吨', '0.5元/吨', '郑商所(CZCE)'],
+    ['纯碱 SA', '20吨', '0.5元/吨', '郑商所(CZCE)'],
+    ['菜粕 RM', '10吨', '0.5元/吨', '郑商所(CZCE)'],
+    ['菜籽油 OI', '10吨', '0.5元/吨', '郑商所(CZCE)'],
+    ['苹果 AP', '10吨', '1元/吨', '郑商所(CZCE)'],
+    ['红枣 CJ', '5吨', '0.5元/吨', '郑商所(CZCE)'],
+    ['花生 PK', '5吨', '1元/吨', '郑商所(CZCE)'],
+    ['玻璃 FG', '20吨', '0.5元/吨', '郑商所(CZCE)'],
+    ['尿素 UR', '20吨', '0.5元/吨', '郑商所(CZCE)'],
+    ['动力煤 ZC', '100吨', '0.2元/吨', '郑商所(CZCE)'],
+    ['硅铁 SF', '5吨', '1元/吨', '郑商所(CZCE)'],
+    ['锰硅 SM', '5吨', '1元/吨', '郑商所(CZCE)'],
+  ]},
+  { title: 'SHFE 上期所 商品期权', data: [
+    ['沪铜 CU', '5吨', '2元/吨', '上期所(SHFE)'],
+    ['沪铝 AL', '5吨', '1元/吨', '上期所(SHFE)'],
+    ['沪锌 ZN', '5吨', '0.5元/吨', '上期所(SHFE)'],
+    ['沪铅 PB', '5吨', '0.5元/吨', '上期所(SHFE)'],
+    ['镍 NI', '1吨', '1元/吨', '上期所(SHFE)'],
+    ['锡 SN', '1吨', '1元/吨', '上期所(SHFE)'],
+    ['黄金 AU', '1000克', '0.02元/克', '上期所(SHFE)'],
+    ['白银 AG', '15千克', '0.5元/千克', '上期所(SHFE)'],
+    ['螺纹钢 RB', '10吨', '0.5元/吨', '上期所(SHFE)'],
+    ['天然橡胶 RU', '10吨', '1元/吨', '上期所(SHFE)'],
+    ['丁二烯橡胶 BR', '5吨', '1元/吨', '上期所(SHFE)'],
+    ['燃料油 FU', '10吨', '1元/吨', '上期所(SHFE)'],
+    ['石油沥青 BU', '10吨', '0.5元/吨', '上期所(SHFE)'],
+    ['纸浆 SP', '10吨', '2元/吨', '上期所(SHFE)'],
+    ['氧化铝 AO', '20吨', '1元/吨', '上期所(SHFE)'],
+  ]},
+  { title: 'INE 能源中心 商品期权', data: [
+    ['原油 SC', '1000桶', '0.05元/桶', '能源中心(INE)'],
+    ['国际铜 BC', '5吨', '2元/吨', '能源中心(INE)'],
+    ['20号胶 NR', '10吨', '1元/吨', '能源中心(INE)'],
+  ]},
+  { title: 'GFEX 广期所 商品期权', data: [
+    ['碳酸锂 LC', '1吨', '0.5元/吨', '广期所(GFEX)'],
+    ['工业硅 SI', '5吨', '1元/吨', '广期所(GFEX)'],
+  ]},
 ];
 
 function renderCommRef() {
-  const tbody = document.getElementById('commRefBody');
+  const container = document.getElementById('tab-ref');
   let html = '';
-  for (const [name, mult, unit, exch] of COMMODITY_REF) {
-    html += `<tr><td>${name}</td><td>${mult} (${unit.split('/')[1]}/手)</td><td>${unit}</td><td>${exch}</td></tr>`;
+  for (const section of REF_SECTIONS) {
+    html += '<div class="card"><div class="section-title">' + section.title + '</div>';
+    html += '<p style="font-size:11px;color:#71717a;margin-bottom:8px">仅供速查，合约规格可能随交易所公告调整，下单前务必在券商软件中确认最新数据。</p>';
+    html += '<table class="comm-table"><thead><tr><th>品种</th><th>合约乘数</th><th>最小变动(期权)</th><th>交易所</th></tr></thead><tbody>';
+    for (const row of section.data) {
+      html += '<tr><td>' + row[0] + '</td><td>' + row[1] + '</td><td>' + row[2] + '</td><td>' + row[3] + '</td></tr>';
+    }
+    html += '</tbody></table></div>';
   }
-  tbody.innerHTML = html;
+  container.innerHTML = html;
 }
 
 // ========== Tab Switching ==========
@@ -575,7 +736,7 @@ const EXAMPLES = {
     ]
   },
   etf_bullcall: {
-    contractType: 'etf', multiplier: 10000, currentPrice: 3.005,
+    contractType: 'etf50', multiplier: 10000, currentPrice: 3.005,
     legs: [
       { direction: 'buy', type: 'call', strike: 2.900, premium: 0.1484, currentPremium: 0.1163, qty: 150 },
       { direction: 'sell', type: 'call', strike: 3.000, premium: 0.0705, currentPremium: 0.0496, qty: 150 }
@@ -816,6 +977,11 @@ function calculate() {
   displayDetail(strikes, legs, multiplier, currentPrice);
   displayFormula(legs, multiplier, netCost, maxProfit, maxLoss, breakevens,
     profitUnlimited, lossUnlimited, currentMarketPnL, costRatio);
+
+  // Save to calculation history
+  if (rawLegs.length >= 2 && netCost !== 0) {
+    saveHistory({ legs, multiplier, netCost, maxProfit, maxLoss, riskReward, breakevens, currentPrice, currentMarketPnL });
+  }
 }
 
 // ========== Formatting ==========
@@ -1596,15 +1762,112 @@ function clearMcMillan() {
 }
 
 // ========== Contract Change ==========
+let currentContractKey = 'etf50';
 function onContractChange() {
   const type = document.getElementById('contractType').value;
   const m = CONTRACTS[type];
+  currentContractKey = type;
   if (m > 0) document.getElementById('multiplier').value = m;
   calculate();
 }
 
+// ========== Calculation History (localStorage) ==========
+const HISTORY_KEY = 'optionCalcHistory_v1';
+const MAX_HISTORY = 50;
+
+function saveHistory(calcData) {
+  try {
+    let history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+    const record = {
+      id: Date.now(),
+      time: new Date().toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }),
+      contract: CONTRACT_NAMES[currentContractKey] || '自定义',
+      contractKey: currentContractKey,
+      multiplier: calcData.multiplier,
+      strategy: calcData.legs.map(l => `${l.direction === 'buy' ? '买' : '卖'}${l.type === 'call' ? '购' : '沽'}${fmtPrice(l.strike)}`).join(' / '),
+      netCost: calcData.netCost,
+      maxProfit: calcData.maxProfit,
+      maxLoss: calcData.maxLoss,
+      riskReward: calcData.riskReward,
+      breakevens: calcData.breakevens,
+      currentPrice: calcData.currentPrice,
+      currentMarketPnL: calcData.currentMarketPnL,
+      legs: calcData.legs.map(l => ({
+        direction: l.direction, type: l.type, strike: l.strike,
+        premium: l.effectivePremium, currentPremium: l.currentPremium, qty: l.qty
+      }))
+    };
+    history.unshift(record);
+    if (history.length > MAX_HISTORY) history = history.slice(0, MAX_HISTORY);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    renderHistory();
+  } catch(e) { /* localStorage unavailable, silently skip */ }
+}
+
+function renderHistory() {
+  try {
+    const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+    const section = document.getElementById('historySection');
+    const list = document.getElementById('historyList');
+    if (history.length === 0) { section.style.display = 'none'; return; }
+    section.style.display = 'block';
+
+    let html = '<table style="width:100%;font-size:12px;border-collapse:collapse">';
+    html += '<thead><tr style="color:#71717a;font-size:11px;border-bottom:1px solid #2e2e3f">';
+    html += '<th style="padding:4px 6px;text-align:left">时间</th>';
+    html += '<th style="padding:4px 6px;text-align:left">品种</th>';
+    html += '<th style="padding:4px 6px;text-align:left">策略</th>';
+    html += '<th style="padding:4px 6px;text-align:right">净成本</th>';
+    html += '<th style="padding:4px 6px;text-align:right">最大盈利</th>';
+    html += '<th style="padding:4px 6px;text-align:right">盈亏比</th>';
+    html += '<th style="padding:4px 6px;text-align:left">盈亏平衡</th>';
+    html += '<th style="padding:4px 6px;text-align:right">当前盈亏</th>';
+    html += '<th style="padding:4px 6px"></th>';
+    html += '</tr></thead><tbody>';
+
+    for (const r of history) {
+      const costStr = Math.abs(r.netCost) >= 10000 ? (Math.abs(r.netCost)/10000).toFixed(2)+'万' : Math.abs(r.netCost).toFixed(0);
+      const profitStr = r.maxProfit >= 10000 ? (r.maxProfit/10000).toFixed(2)+'万' : r.maxProfit.toFixed(0);
+      const rrStr = r.riskReward !== null ? `1:${r.riskReward.toFixed(2)}` : '-';
+      const beStr = r.breakevens.length > 0 ? r.breakevens.map(be => fmtPrice(be)).join('/') : '-';
+      const pnlStr = r.currentMarketPnL !== null ? (r.currentMarketPnL >= 0 ? '+' : '') + fmt(r.currentMarketPnL) : '-';
+
+      html += `<tr style="border-bottom:1px solid #1e1e2f">`;
+      html += `<td style="padding:4px 6px;color:#71717a">${r.time}</td>`;
+      html += `<td style="padding:4px 6px;font-weight:600">${r.contract}</td>`;
+      html += `<td style="padding:4px 6px;color:#a1a1aa;font-size:11px">${r.strategy}</td>`;
+      html += `<td style="padding:4px 6px;text-align:right;color:#22c55e">${costStr}</td>`;
+      html += `<td style="padding:4px 6px;text-align:right;color:#ef4444">${profitStr}</td>`;
+      html += `<td style="padding:4px 6px;text-align:right">${rrStr}</td>`;
+      html += `<td style="padding:4px 6px;color:#fbbf24">${beStr}</td>`;
+      html += `<td style="padding:4px 6px;text-align:right;color:${r.currentMarketPnL >= 0 ? '#ef4444' : '#22c55e'}">${pnlStr}</td>`;
+      html += `<td style="padding:4px 6px"><button class="btn-danger" onclick="deleteHistory(${r.id})" style="font-size:10px;padding:2px 5px">删</button></td>`;
+      html += '</tr>';
+    }
+    html += '</tbody></table>';
+    list.innerHTML = html;
+  } catch(e) { /* silently skip */ }
+}
+
+function deleteHistory(id) {
+  try {
+    let history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+    history = history.filter(r => r.id !== id);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    renderHistory();
+  } catch(e) {}
+}
+
+function clearHistory() {
+  try {
+    localStorage.removeItem(HISTORY_KEY);
+    renderHistory();
+  } catch(e) {}
+}
+
 // ========== Init ==========
 renderCommRef();
+renderHistory();
 onContractChange();
 loadExample('etf_bullcall');
 
