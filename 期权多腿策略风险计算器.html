@@ -341,6 +341,7 @@ td input:focus, td select:focus { border-color: #6366f1; }
             <optgroup label="GFEX 广期所">
               <option value="lc">碳酸锂 LC (1吨/手)</option>
               <option value="si">工业硅 SI (5吨/手)</option>
+              <option value="ps">多晶硅 PS (3吨/手)</option>
             </optgroup>
             <optgroup label="其他">
               <option value="custom">自定义乘数</option>
@@ -523,7 +524,7 @@ const CONTRACTS = {
   // INE 能源中心
   sc: 1000, bc: 5, nr: 10,
   // GFEX 广期所
-  lc: 1, si: 5, pc: 1,
+  lc: 1, si: 5, ps: 3,
   custom: 0
 };
 
@@ -542,7 +543,7 @@ const CONTRACT_NAMES = {
   au: '黄金', ag: '白银', rb: '螺纹钢', ru: '天然橡胶', br: '丁二烯橡胶',
   fu: '燃料油', bu: '石油沥青', sp: '纸浆', ao: '氧化铝',
   sc: '原油', bc: '国际铜', nr: '20号胶',
-  lc: '碳酸锂', si: '工业硅', pc: '多晶硅',
+  lc: '碳酸锂', si: '工业硅', ps: '多晶硅',
   custom: '自定义'
 };
 
@@ -580,7 +581,7 @@ const REF_SECTIONS = [
     ['苯乙烯 eb', '5吨', '1元/吨', '大商所(DCE)'],
     ['液化石油气 pg', '20吨', '0.5元/吨', '大商所(DCE)'],
     ['焦煤 jm', '60吨', '0.5元/吨', '大商所(DCE)'],
-    ['鸡蛋 jd', '10吨', '0.5元/500kg', '大商所(DCE)'],
+    ['鸡蛋 jd', '5吨(报价元/500kg)', '0.5元/500kg', '大商所(DCE)'],
     ['玉米淀粉 cs', '10吨', '1元/吨', '大商所(DCE)'],
   ]},
   { title: 'CZCE 郑商所 商品期权', data: [
@@ -625,6 +626,7 @@ const REF_SECTIONS = [
   { title: 'GFEX 广期所 商品期权', data: [
     ['碳酸锂 LC', '1吨', '0.5元/吨', '广期所(GFEX)'],
     ['工业硅 SI', '5吨', '1元/吨', '广期所(GFEX)'],
+    ['多晶硅 PS', '3吨', '1元/吨', '广期所(GFEX)'],
   ]},
 ];
 
