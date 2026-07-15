@@ -809,8 +809,8 @@ function getLegsRaw() {
     const selects = row.querySelectorAll('select');
     const inputs = row.querySelectorAll('input[type="number"]');
     const useBA = document.getElementById('useBidAsk')?.value === 'yes';
-    let strikeIdx = 0, bidIdx = -1, askIdx = -1, premIdx = 1, curIdx = 2, qtyIdx = 3;
-    if (useBA) { bidIdx = 1; askIdx = 2; premIdx = 3; curIdx = 4; qtyIdx = 5; }
+    // Bid/ask inputs are always in DOM (hidden when not used), so indices are constant
+    const strikeIdx = 0, bidIdx = 1, askIdx = 2, premIdx = 3, curIdx = 4, qtyIdx = 5;
     const strike = parseFloat(inputs[strikeIdx].value);
     const bid = useBA ? parseFloat(inputs[bidIdx].value) : NaN;
     const ask = useBA ? parseFloat(inputs[askIdx].value) : NaN;
