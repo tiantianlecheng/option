@@ -20,6 +20,7 @@
   --scenario1: #60a5fa;
   --scenario2: #fbbf24;
   --scenario3: #a78bfa;
+  --scenario4: #2dd4bf;
   --input-bg: rgba(15, 23, 42, 0.8);
   --input-border: rgba(255, 255, 255, 0.1);
   --mono: ui-monospace, 'SF Mono', 'Cascadia Code', 'Roboto Mono', monospace;
@@ -155,6 +156,7 @@ button {
 }
 .scenario-card.s2 { border-left-color: var(--scenario2); }
 .scenario-card.s3 { border-left-color: var(--scenario3); }
+.scenario-card.s4 { border-left-color: var(--scenario4); }
 .scenario-card h3 { font-size: 16px; margin-bottom: 4px; }
 .scenario-card .desc { font-size: 13px; color: var(--text-secondary); margin-bottom: 14px; }
 
@@ -317,6 +319,7 @@ button {
 .detail-scenario .s-title.s1-title { color: var(--scenario1); }
 .detail-scenario .s-title.s2-title { color: var(--scenario2); }
 .detail-scenario .s-title.s3-title { color: var(--scenario3); }
+.detail-scenario .s-title.s4-title { color: var(--scenario4); }
 .detail-scenario .s-data { display: flex; flex-direction: column; gap: 4px; font-size: 12px; }
 .detail-scenario .s-data .row { display: flex; justify-content: space-between; }
 .detail-scenario .s-data .row .k { color: var(--text-muted); }
@@ -538,6 +541,47 @@ button {
         <div class="scenario-note">💡 剩余持仓成本为0，含1/2未实现利润，更激进地锁定利润</div>
       </div>
 
+      <!-- Scenario 4 -->
+      <div class="scenario-card s4">
+        <h3>🟢 方案四：收回成本 + 80%利润</h3>
+        <p class="desc">卖出收回全部成本，同时锁定80%的止盈利润，只留20%博继续上涨</p>
+        <div class="scenario-data">
+          <div class="data-row">
+            <span class="label">卖出数量</span>
+            <span class="val highlight" id="sellQty4">-</span>
+          </div>
+          <div class="data-row">
+            <span class="label">卖出比例</span>
+            <span class="val" id="sellPct4">-</span>
+          </div>
+          <div class="data-row">
+            <span class="label">收回金额</span>
+            <span class="val cost-color" id="recover4">-</span>
+          </div>
+          <div class="data-row sub">
+            <span class="label">├ 其中成本</span>
+            <span class="val" id="costPart4">-</span>
+          </div>
+          <div class="data-row sub">
+            <span class="label">└ 其中利润</span>
+            <span class="val profit" id="profitPart4">-</span>
+          </div>
+          <div class="data-row">
+            <span class="label">剩余数量</span>
+            <span class="val" id="remainQty4">-</span>
+          </div>
+          <div class="data-row">
+            <span class="label">剩余持仓价值</span>
+            <span class="val remaining-color" id="remainVal4">-</span>
+          </div>
+        </div>
+        <div class="bar-wrap">
+          <div class="bar-seg bar-sell" id="barSell4" style="background:var(--scenario4)"></div>
+          <div class="bar-seg bar-keep" id="barKeep4"></div>
+        </div>
+        <div class="scenario-note">💡 剩余持仓成本为0，含20%未实现利润，绝大部分利润已落袋为安</div>
+      </div>
+
       <!-- Formula -->
       <details class="formula-section">
         <summary>📐 计算公式说明（点击展开）</summary>
@@ -547,8 +591,9 @@ button {
           <p><strong>方案一卖出数量</strong> = 买入成本 ÷ 止盈价</p>
           <p><strong>方案二卖出数量</strong> = (买入成本 + 止盈总利润 ÷ 3) ÷ 止盈价</p>
           <p><strong>方案三卖出数量</strong> = (买入成本 + 止盈总利润 ÷ 2) ÷ 止盈价</p>
+          <p><strong>方案四卖出数量</strong> = (买入成本 + 止盈总利润 × 80%) ÷ 止盈价</p>
           <p style="margin-top:8px; color:var(--text-muted)">剩余持仓价值 = 止盈总利润 − 已锁定利润</p>
-          <p style="color:var(--text-muted)">三种方案都全额收回成本，区别在于额外锁定了多少利润。剩余持仓的成本基数为0。</p>
+          <p style="color:var(--text-muted)">四种方案都全额收回成本，区别在于额外锁定了多少利润。剩余持仓的成本基数为0。</p>
         </div>
       </details>
 
@@ -624,14 +669,16 @@ function calculate() {
   document.getElementById('totalProfit').textContent = fmtMoney(totalProfit);
   document.getElementById('profitRate').textContent = profitRate.toFixed(1) + '%';
 
-  // Three scenarios
+  // Four scenarios
   const qty1 = cost / S;
   const qty2 = (cost + totalProfit / 3) / S;
   const qty3 = (cost + totalProfit / 2) / S;
+  const qty4 = (cost + totalProfit * 0.8) / S;
 
   updateCard(1, qty1, Q, S, cost, 0, totalProfit);
   updateCard(2, qty2, Q, S, cost, totalProfit / 3, totalProfit * 2 / 3);
   updateCard(3, qty3, Q, S, cost, totalProfit / 2, totalProfit / 2);
+  updateCard(4, qty4, Q, S, cost, totalProfit * 0.8, totalProfit * 0.2);
 
   document.getElementById('results').style.display = 'block';
   document.getElementById('errorMsg').style.display = 'none';
@@ -649,6 +696,7 @@ function calculate() {
       { sellQty: qty1, sellPct: (qty1/Q)*100, recoverAmount: qty1*S, costRecovered: cost, profitRecovered: 0, remainQty: Q-qty1, remainVal: totalProfit },
       { sellQty: qty2, sellPct: (qty2/Q)*100, recoverAmount: qty2*S, costRecovered: cost, profitRecovered: totalProfit/3, remainQty: Q-qty2, remainVal: totalProfit*2/3 },
       { sellQty: qty3, sellPct: (qty3/Q)*100, recoverAmount: qty3*S, costRecovered: cost, profitRecovered: totalProfit/2, remainQty: Q-qty3, remainVal: totalProfit/2 },
+      { sellQty: qty4, sellPct: (qty4/Q)*100, recoverAmount: qty4*S, costRecovered: cost, profitRecovered: totalProfit*0.8, remainQty: Q-qty4, remainVal: totalProfit*0.2 },
     ]
   });
 }
@@ -747,8 +795,8 @@ function renderHistory() {
     card.className = 'history-card';
     card.dataset.id = record.id;
 
-    const scenarioNames = ['仅收回成本', '收回成本+1/3利润', '收回成本+1/2利润'];
-    const scenarioClasses = ['s1-title', 's2-title', 's3-title'];
+    const scenarioNames = ['仅收回成本', '收回成本+1/3利润', '收回成本+1/2利润', '收回成本+80%利润'];
+    const scenarioClasses = ['s1-title', 's2-title', 's3-title', 's4-title'];
 
     let detailHtml = '';
     record.scenarios.forEach((s, i) => {
