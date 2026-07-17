@@ -23,6 +23,7 @@
   --input-bg: rgba(15, 23, 42, 0.8);
   --input-border: rgba(255, 255, 255, 0.1);
   --mono: ui-monospace, 'SF Mono', 'Cascadia Code', 'Roboto Mono', monospace;
+  --danger: #ef4444;
 }
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
@@ -32,7 +33,27 @@ body {
   padding: 16px;
   line-height: 1.6;
 }
-.container { max-width: 600px; margin: 0 auto; }
+
+/* Main Layout */
+.main-layout {
+  max-width: 960px;
+  margin: 0 auto;
+  display: flex;
+  gap: 16px;
+}
+.calc-panel { flex: 1; min-width: 0; }
+.history-panel {
+  width: 320px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 16px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+}
+@media (max-width: 767px) {
+  .main-layout { flex-direction: column; }
+  .history-panel { width: 100%; position: static; max-height: none; }
+}
 
 /* Header */
 header { text-align: center; padding: 20px 0 24px; }
@@ -46,7 +67,7 @@ header p { color: var(--text-secondary); font-size: 14px; }
   border: 1px solid rgba(239, 68, 68, 0.3);
   border-radius: 10px;
   padding: 10px 14px;
-  color: var(--profit);
+  color: var(--danger);
   font-size: 13px;
   margin-bottom: 12px;
 }
@@ -186,207 +207,378 @@ button {
   padding: 8px 0 20px;
   line-height: 1.6;
 }
+
+/* ========== History Panel ========== */
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px 16px 0 0;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.history-header h2 { font-size: 15px; color: var(--accent-gold); }
+.history-header .record-count { font-size: 12px; color: var(--text-muted); }
+.btn-clear-history {
+  background: rgba(239,68,68,0.12);
+  color: var(--danger);
+  border: 1px solid rgba(239,68,68,0.2);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-clear-history:active { transform: scale(0.95); }
+
+.history-list {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-top: none;
+  border-radius: 0 0 16px 16px;
+  padding: 8px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.history-empty {
+  text-align: center;
+  padding: 30px 16px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* History Record Card */
+.history-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.history-card:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.12); }
+.history-card:active { transform: scale(0.98); }
+.history-card.active { border-color: var(--accent-gold); background: rgba(251,191,36,0.06); }
+
+.history-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.history-card-top .date { font-size: 11px; color: var(--text-muted); font-family: var(--mono); }
+.btn-delete-record {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+.btn-delete-record:hover { color: var(--danger); background: rgba(239,68,68,0.1); }
+
+.history-card-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 12px;
+  font-size: 12px;
+}
+.history-card-summary .item { display: flex; justify-content: space-between; }
+.history-card-summary .item .k { color: var(--text-muted); }
+.history-card-summary .item .v { color: var(--text-primary); font-family: var(--mono); font-weight: 500; }
+
+/* Expanded Detail */
+.history-detail {
+  display: none;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.history-card.active .history-detail { display: block; }
+
+.detail-scenario {
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.03);
+}
+.detail-scenario .s-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.detail-scenario .s-title.s1-title { color: var(--scenario1); }
+.detail-scenario .s-title.s2-title { color: var(--scenario2); }
+.detail-scenario .s-title.s3-title { color: var(--scenario3); }
+.detail-scenario .s-data { display: flex; flex-direction: column; gap: 4px; font-size: 12px; }
+.detail-scenario .s-data .row { display: flex; justify-content: space-between; }
+.detail-scenario .s-data .row .k { color: var(--text-muted); }
+.detail-scenario .s-data .row .v { color: var(--text-primary); font-family: var(--mono); font-weight: 500; }
+
+.btn-reload {
+  background: var(--accent-gold);
+  color: #0a0e1a;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 6px;
+  transition: all 0.2s;
+}
+.btn-reload:active { transform: scale(0.97); }
+
+/* Mobile toggle button */
+.history-toggle {
+  display: none;
+  background: var(--accent-gold);
+  color: #0a0e1a;
+  border: none;
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 16px;
+  width: 100%;
+  text-align: center;
+}
+@media (max-width: 767px) {
+  .history-toggle { display: block; }
+  .history-panel-mobile-hide { display: none; }
+  .history-panel-mobile-show { display: block; }
+}
 </style>
 </head>
 <body>
-<div class="container">
-  <header>
-    <h1>🎯 止盈成本回收计算器</h1>
-    <p>在止盈价位卖出多少，才能收回成本？</p>
-  </header>
+<div class="main-layout">
+  <!-- Left: Calculator -->
+  <div class="calc-panel">
+    <header>
+      <h1>🎯 止盈成本回收计算器</h1>
+      <p>在止盈价位卖出多少，才能收回成本？</p>
+    </header>
 
-  <div class="error-msg" id="errorMsg"></div>
+    <div class="error-msg" id="errorMsg"></div>
 
-  <section class="input-section">
-    <div class="input-grid">
-      <div class="input-group">
-        <label>买入价</label>
-        <input type="text" inputmode="decimal" id="buyPrice" placeholder="0.00" autocomplete="off" onkeydown="if(event.key==='Enter')calculate()" oninput="document.getElementById('errorMsg').style.display='none'">
+    <section class="input-section">
+      <div class="input-grid">
+        <div class="input-group">
+          <label>买入价</label>
+          <input type="text" inputmode="decimal" id="buyPrice" placeholder="0.00" autocomplete="off" onkeydown="if(event.key==='Enter')calculate()" oninput="document.getElementById('errorMsg').style.display='none'">
+        </div>
+        <div class="input-group">
+          <label>买入数量</label>
+          <input type="text" inputmode="decimal" id="buyQty" placeholder="0" autocomplete="off" onkeydown="if(event.key==='Enter')calculate()" oninput="document.getElementById('errorMsg').style.display='none'">
+        </div>
+        <div class="input-group">
+          <label>止盈价</label>
+          <input type="text" inputmode="decimal" id="sellPrice" placeholder="0.00" autocomplete="off" onkeydown="if(event.key==='Enter')calculate()" oninput="document.getElementById('errorMsg').style.display='none'">
+        </div>
       </div>
-      <div class="input-group">
-        <label>买入数量</label>
-        <input type="text" inputmode="decimal" id="buyQty" placeholder="0" autocomplete="off" onkeydown="if(event.key==='Enter')calculate()" oninput="document.getElementById('errorMsg').style.display='none'">
+      <div class="btn-row">
+        <button class="btn-calc" onclick="calculate()">计 算</button>
+        <button class="btn-reset" onclick="resetAll()">重置</button>
       </div>
-      <div class="input-group">
-        <label>止盈价</label>
-        <input type="text" inputmode="decimal" id="sellPrice" placeholder="0.00" autocomplete="off" onkeydown="if(event.key==='Enter')calculate()" oninput="document.getElementById('errorMsg').style.display='none'">
+    </section>
+
+    <section id="results">
+      <!-- Summary -->
+      <div class="summary-card">
+        <h2>📊 交易概览</h2>
+        <div class="summary-grid">
+          <div class="summary-item">
+            <span class="label">买入总成本</span>
+            <span class="value cost-color" id="totalCost">-</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">单位利润</span>
+            <span class="value profit" id="unitProfit">-</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">总利润（全部止盈）</span>
+            <span class="value profit" id="totalProfit">-</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">利润率</span>
+            <span class="value profit" id="profitRate">-</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scenario 1 -->
+      <div class="scenario-card s1">
+        <h3>🔵 方案一：仅收回成本</h3>
+        <p class="desc">卖出刚好收回全部买入成本，剩余持仓全部是纯利润</p>
+        <div class="scenario-data">
+          <div class="data-row">
+            <span class="label">卖出数量</span>
+            <span class="val highlight" id="sellQty1">-</span>
+          </div>
+          <div class="data-row">
+            <span class="label">卖出比例</span>
+            <span class="val" id="sellPct1">-</span>
+          </div>
+          <div class="data-row">
+            <span class="label">收回金额</span>
+            <span class="val cost-color" id="recover1">-</span>
+          </div>
+          <div class="data-row sub">
+            <span class="label">├ 其中成本</span>
+            <span class="val" id="costPart1">-</span>
+          </div>
+          <div class="data-row sub">
+            <span class="label">└ 其中利润</span>
+            <span class="val" id="profitPart1">-</span>
+          </div>
+          <div class="data-row">
+            <span class="label">剩余数量</span>
+            <span class="val" id="remainQty1">-</span>
+          </div>
+          <div class="data-row">
+            <span class="label">剩余持仓价值</span>
+            <span class="val remaining-color" id="remainVal1">-</span>
+          </div>
+        </div>
+        <div class="bar-wrap">
+          <div class="bar-seg bar-sell" id="barSell1" style="background:var(--scenario1)"></div>
+          <div class="bar-seg bar-keep" id="barKeep1"></div>
+        </div>
+        <div class="scenario-note">💡 剩余持仓成本为0，全部为纯利润，即使价格回落也不会亏损本金</div>
+      </div>
+
+      <!-- Scenario 2 -->
+      <div class="scenario-card s2">
+        <h3>🟡 方案二：收回成本 + 1/3利润</h3>
+        <p class="desc">卖出收回全部成本，同时锁定1/3的止盈利润</p>
+        <div class="scenario-data">
+          <div class="data-row">
+            <span class="label">卖出数量</span>
+            <span class="val highlight" id="sellQty2">-</span>
+          </div>
+          <div class="data-row">
+            <span class="label">卖出比例</span>
+            <span class="val" id="sellPct2">-</span>
+          </div>
+          <div class="data-row">
+            <span class="label">收回金额</span>
+            <span class="val cost-color" id="recover2">-</span>
+          </div>
+          <div class="data-row sub">
+            <span class="label">├ 其中成本</span>
+            <span class="val" id="costPart2">-</span>
+          </div>
+          <div class="data-row sub">
+            <span class="label">└ 其中利润</span>
+            <span class="val profit" id="profitPart2">-</span>
+          </div>
+          <div class="data-row">
+            <span class="label">剩余数量</span>
+            <span class="val" id="remainQty2">-</span>
+          </div>
+          <div class="data-row">
+            <span class="label">剩余持仓价值</span>
+            <span class="val remaining-color" id="remainVal2">-</span>
+          </div>
+        </div>
+        <div class="bar-wrap">
+          <div class="bar-seg bar-sell" id="barSell2" style="background:var(--scenario2)"></div>
+          <div class="bar-seg bar-keep" id="barKeep2"></div>
+        </div>
+        <div class="scenario-note">💡 剩余持仓成本为0，含2/3未实现利润，兼顾落袋为安与继续持有</div>
+      </div>
+
+      <!-- Scenario 3 -->
+      <div class="scenario-card s3">
+        <h3>🟣 方案三：收回成本 + 1/2利润</h3>
+        <p class="desc">卖出收回全部成本，同时锁定1/2的止盈利润</p>
+        <div class="scenario-data">
+          <div class="data-row">
+            <span class="label">卖出数量</span>
+            <span class="val highlight" id="sellQty3">-</span>
+          </div>
+          <div class="data-row">
+            <span class="label">卖出比例</span>
+            <span class="val" id="sellPct3">-</span>
+          </div>
+          <div class="data-row">
+            <span class="label">收回金额</span>
+            <span class="val cost-color" id="recover3">-</span>
+          </div>
+          <div class="data-row sub">
+            <span class="label">├ 其中成本</span>
+            <span class="val" id="costPart3">-</span>
+          </div>
+          <div class="data-row sub">
+            <span class="label">└ 其中利润</span>
+            <span class="val profit" id="profitPart3">-</span>
+          </div>
+          <div class="data-row">
+            <span class="label">剩余数量</span>
+            <span class="val" id="remainQty3">-</span>
+          </div>
+          <div class="data-row">
+            <span class="label">剩余持仓价值</span>
+            <span class="val remaining-color" id="remainVal3">-</span>
+          </div>
+        </div>
+        <div class="bar-wrap">
+          <div class="bar-seg bar-sell" id="barSell3" style="background:var(--scenario3)"></div>
+          <div class="bar-seg bar-keep" id="barKeep3"></div>
+        </div>
+        <div class="scenario-note">💡 剩余持仓成本为0，含1/2未实现利润，更激进地锁定利润</div>
+      </div>
+
+      <!-- Formula -->
+      <details class="formula-section">
+        <summary>📐 计算公式说明（点击展开）</summary>
+        <div class="formula-content">
+          <p><strong>买入成本</strong> = 买入价 × 买入数量</p>
+          <p><strong>止盈总利润</strong> = (止盈价 − 买入价) × 买入数量</p>
+          <p><strong>方案一卖出数量</strong> = 买入成本 ÷ 止盈价</p>
+          <p><strong>方案二卖出数量</strong> = (买入成本 + 止盈总利润 ÷ 3) ÷ 止盈价</p>
+          <p><strong>方案三卖出数量</strong> = (买入成本 + 止盈总利润 ÷ 2) ÷ 止盈价</p>
+          <p style="margin-top:8px; color:var(--text-muted)">剩余持仓价值 = 止盈总利润 − 已锁定利润</p>
+          <p style="color:var(--text-muted)">三种方案都全额收回成本，区别在于额外锁定了多少利润。剩余持仓的成本基数为0。</p>
+        </div>
+      </details>
+
+      <div class="footer-note">
+        ⚠️ 实际交易中，卖出数量需按最小交易单位取整（如A股100股、期权1张）<br>
+        取整后收回金额可能略有偏差，属正常现象
+      </div>
+    </section>
+  </div>
+
+  <!-- Right: History Panel -->
+  <div class="history-panel" id="historyPanel">
+    <button class="history-toggle" id="historyToggle" onclick="toggleHistory()">📋 计算记录 <span id="historyCountBadge">0</span> 条</button>
+    <div id="historyContent">
+      <div class="history-header">
+        <div>
+          <h2>📋 计算记录</h2>
+          <span class="record-count" id="recordCount">0 条记录</span>
+        </div>
+        <button class="btn-clear-history" onclick="clearHistory()" id="btnClearHistory" style="display:none">清空全部</button>
+      </div>
+      <div class="history-list" id="historyList">
+        <div class="history-empty" id="historyEmpty">暂无计算记录<br>计算后将自动保存</div>
       </div>
     </div>
-    <div class="btn-row">
-      <button class="btn-calc" onclick="calculate()">计 算</button>
-      <button class="btn-reset" onclick="resetAll()">重置</button>
-    </div>
-  </section>
-
-  <section id="results">
-    <!-- Summary -->
-    <div class="summary-card">
-      <h2>📊 交易概览</h2>
-      <div class="summary-grid">
-        <div class="summary-item">
-          <span class="label">买入总成本</span>
-          <span class="value cost-color" id="totalCost">-</span>
-        </div>
-        <div class="summary-item">
-          <span class="label">单位利润</span>
-          <span class="value profit" id="unitProfit">-</span>
-        </div>
-        <div class="summary-item">
-          <span class="label">总利润（全部止盈）</span>
-          <span class="value profit" id="totalProfit">-</span>
-        </div>
-        <div class="summary-item">
-          <span class="label">利润率</span>
-          <span class="value profit" id="profitRate">-</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Scenario 1 -->
-    <div class="scenario-card s1">
-      <h3>🔵 方案一：仅收回成本</h3>
-      <p class="desc">卖出刚好收回全部买入成本，剩余持仓全部是纯利润</p>
-      <div class="scenario-data">
-        <div class="data-row">
-          <span class="label">卖出数量</span>
-          <span class="val highlight" id="sellQty1">-</span>
-        </div>
-        <div class="data-row">
-          <span class="label">卖出比例</span>
-          <span class="val" id="sellPct1">-</span>
-        </div>
-        <div class="data-row">
-          <span class="label">收回金额</span>
-          <span class="val cost-color" id="recover1">-</span>
-        </div>
-        <div class="data-row sub">
-          <span class="label">├ 其中成本</span>
-          <span class="val" id="costPart1">-</span>
-        </div>
-        <div class="data-row sub">
-          <span class="label">└ 其中利润</span>
-          <span class="val" id="profitPart1">-</span>
-        </div>
-        <div class="data-row">
-          <span class="label">剩余数量</span>
-          <span class="val" id="remainQty1">-</span>
-        </div>
-        <div class="data-row">
-          <span class="label">剩余持仓价值</span>
-          <span class="val remaining-color" id="remainVal1">-</span>
-        </div>
-      </div>
-      <div class="bar-wrap">
-        <div class="bar-seg bar-sell" id="barSell1" style="background:var(--scenario1)"></div>
-        <div class="bar-seg bar-keep" id="barKeep1"></div>
-      </div>
-      <div class="scenario-note">💡 剩余持仓成本为0，全部为纯利润，即使价格回落也不会亏损本金</div>
-    </div>
-
-    <!-- Scenario 2 -->
-    <div class="scenario-card s2">
-      <h3>🟡 方案二：收回成本 + 1/3利润</h3>
-      <p class="desc">卖出收回全部成本，同时锁定1/3的止盈利润</p>
-      <div class="scenario-data">
-        <div class="data-row">
-          <span class="label">卖出数量</span>
-          <span class="val highlight" id="sellQty2">-</span>
-        </div>
-        <div class="data-row">
-          <span class="label">卖出比例</span>
-          <span class="val" id="sellPct2">-</span>
-        </div>
-        <div class="data-row">
-          <span class="label">收回金额</span>
-          <span class="val cost-color" id="recover2">-</span>
-        </div>
-        <div class="data-row sub">
-          <span class="label">├ 其中成本</span>
-          <span class="val" id="costPart2">-</span>
-        </div>
-        <div class="data-row sub">
-          <span class="label">└ 其中利润</span>
-          <span class="val profit" id="profitPart2">-</span>
-        </div>
-        <div class="data-row">
-          <span class="label">剩余数量</span>
-          <span class="val" id="remainQty2">-</span>
-        </div>
-        <div class="data-row">
-          <span class="label">剩余持仓价值</span>
-          <span class="val remaining-color" id="remainVal2">-</span>
-        </div>
-      </div>
-      <div class="bar-wrap">
-        <div class="bar-seg bar-sell" id="barSell2" style="background:var(--scenario2)"></div>
-        <div class="bar-seg bar-keep" id="barKeep2"></div>
-      </div>
-      <div class="scenario-note">💡 剩余持仓成本为0，含2/3未实现利润，兼顾落袋为安与继续持有</div>
-    </div>
-
-    <!-- Scenario 3 -->
-    <div class="scenario-card s3">
-      <h3>🟣 方案三：收回成本 + 1/2利润</h3>
-      <p class="desc">卖出收回全部成本，同时锁定1/2的止盈利润</p>
-      <div class="scenario-data">
-        <div class="data-row">
-          <span class="label">卖出数量</span>
-          <span class="val highlight" id="sellQty3">-</span>
-        </div>
-        <div class="data-row">
-          <span class="label">卖出比例</span>
-          <span class="val" id="sellPct3">-</span>
-        </div>
-        <div class="data-row">
-          <span class="label">收回金额</span>
-          <span class="val cost-color" id="recover3">-</span>
-        </div>
-        <div class="data-row sub">
-          <span class="label">├ 其中成本</span>
-          <span class="val" id="costPart3">-</span>
-        </div>
-        <div class="data-row sub">
-          <span class="label">└ 其中利润</span>
-          <span class="val profit" id="profitPart3">-</span>
-        </div>
-        <div class="data-row">
-          <span class="label">剩余数量</span>
-          <span class="val" id="remainQty3">-</span>
-        </div>
-        <div class="data-row">
-          <span class="label">剩余持仓价值</span>
-          <span class="val remaining-color" id="remainVal3">-</span>
-        </div>
-      </div>
-      <div class="bar-wrap">
-        <div class="bar-seg bar-sell" id="barSell3" style="background:var(--scenario3)"></div>
-        <div class="bar-seg bar-keep" id="barKeep3"></div>
-      </div>
-      <div class="scenario-note">💡 剩余持仓成本为0，含1/2未实现利润，更激进地锁定利润</div>
-    </div>
-
-    <!-- Formula -->
-    <details class="formula-section">
-      <summary>📐 计算公式说明（点击展开）</summary>
-      <div class="formula-content">
-        <p><strong>买入成本</strong> = 买入价 × 买入数量</p>
-        <p><strong>止盈总利润</strong> = (止盈价 − 买入价) × 买入数量</p>
-        <p><strong>方案一卖出数量</strong> = 买入成本 ÷ 止盈价</p>
-        <p><strong>方案二卖出数量</strong> = (买入成本 + 止盈总利润 ÷ 3) ÷ 止盈价</p>
-        <p><strong>方案三卖出数量</strong> = (买入成本 + 止盈总利润 ÷ 2) ÷ 止盈价</p>
-        <p style="margin-top:8px; color:var(--text-muted)">剩余持仓价值 = 止盈总利润 − 已锁定利润</p>
-        <p style="color:var(--text-muted)">三种方案都全额收回成本，区别在于额外锁定了多少利润。剩余持仓的成本基数为0。</p>
-      </div>
-    </details>
-
-    <div class="footer-note">
-      ⚠️ 实际交易中，卖出数量需按最小交易单位取整（如A股100股、期权1张）<br>
-      取整后收回金额可能略有偏差，属正常现象
-    </div>
-  </section>
+  </div>
 </div>
 
 <script>
+/* ========== Formatting ========== */
 function fmtPrice(n) {
   if (n >= 1000) return n.toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
   if (n >= 1) return n.toFixed(4);
@@ -399,12 +591,14 @@ function fmtQty(n) {
 function fmtMoney(n) {
   return '\u00a5' + n.toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 }
+function fmtPct(n) { return n.toFixed(1) + '%'; }
 function showError(msg) {
   const el = document.getElementById('errorMsg');
   el.textContent = msg;
   el.style.display = 'block';
 }
 
+/* ========== Calculation ========== */
 function calculate() {
   const P = parseFloat(document.getElementById('buyPrice').value);
   const Q = parseFloat(document.getElementById('buyQty').value);
@@ -441,6 +635,22 @@ function calculate() {
 
   document.getElementById('results').style.display = 'block';
   document.getElementById('errorMsg').style.display = 'none';
+
+  // Save to history
+  saveHistory({
+    buyPrice: P,
+    buyQty: Q,
+    sellPrice: S,
+    totalCost: cost,
+    unitProfit: unitProfit,
+    totalProfit: totalProfit,
+    profitRate: profitRate,
+    scenarios: [
+      { sellQty: qty1, sellPct: (qty1/Q)*100, recoverAmount: qty1*S, costRecovered: cost, profitRecovered: 0, remainQty: Q-qty1, remainVal: totalProfit },
+      { sellQty: qty2, sellPct: (qty2/Q)*100, recoverAmount: qty2*S, costRecovered: cost, profitRecovered: totalProfit/3, remainQty: Q-qty2, remainVal: totalProfit*2/3 },
+      { sellQty: qty3, sellPct: (qty3/Q)*100, recoverAmount: qty3*S, costRecovered: cost, profitRecovered: totalProfit/2, remainQty: Q-qty3, remainVal: totalProfit/2 },
+    ]
+  });
 }
 
 function updateCard(n, sellQty, totalQty, sellPrice, costRecovered, profitRecovered, remainingVal) {
@@ -472,6 +682,154 @@ function resetAll() {
   document.getElementById('results').style.display = 'none';
   document.getElementById('errorMsg').style.display = 'none';
 }
+
+/* ========== History ========== */
+const STORAGE_KEY = 'tp_cost_recovery_history';
+const MAX_RECORDS = 50;
+
+function getHistory() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  } catch { return []; }
+}
+
+function saveHistory(data) {
+  const history = getHistory();
+  const now = new Date();
+  const id = now.getTime();
+  const dateStr = now.getFullYear() + '-' +
+    String(now.getMonth()+1).padStart(2,'0') + '-' +
+    String(now.getDate()).padStart(2,'0') + ' ' +
+    String(now.getHours()).padStart(2,'0') + ':' +
+    String(now.getMinutes()).padStart(2,'0');
+  history.unshift({ id, date: dateStr, ...data });
+  if (history.length > MAX_RECORDS) history.splice(MAX_RECORDS);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+  renderHistory();
+}
+
+function deleteHistory(id) {
+  const history = getHistory().filter(r => r.id !== id);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+  renderHistory();
+}
+
+function clearHistory() {
+  if (!confirm('确认清空所有计算记录？')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  renderHistory();
+}
+
+function renderHistory() {
+  const history = getHistory();
+  const listEl = document.getElementById('historyList');
+  const countEl = document.getElementById('recordCount');
+  const badgeEl = document.getElementById('historyCountBadge');
+  const emptyEl = document.getElementById('historyEmpty');
+  const clearBtn = document.getElementById('btnClearHistory');
+
+  countEl.textContent = history.length + ' 条记录';
+  badgeEl.textContent = history.length;
+  clearBtn.style.display = history.length > 0 ? 'block' : 'none';
+
+  if (history.length === 0) {
+    emptyEl.style.display = 'block';
+    listEl.querySelectorAll('.history-card').forEach(el => el.remove());
+    return;
+  }
+  emptyEl.style.display = 'none';
+
+  // Remove old cards
+  listEl.querySelectorAll('.history-card').forEach(el => el.remove());
+
+  history.forEach(record => {
+    const card = document.createElement('div');
+    card.className = 'history-card';
+    card.dataset.id = record.id;
+
+    const scenarioNames = ['仅收回成本', '收回成本+1/3利润', '收回成本+1/2利润'];
+    const scenarioClasses = ['s1-title', 's2-title', 's3-title'];
+
+    let detailHtml = '';
+    record.scenarios.forEach((s, i) => {
+      detailHtml += `
+        <div class="detail-scenario">
+          <div class="s-title ${scenarioClasses[i]}">${scenarioNames[i]}</div>
+          <div class="s-data">
+            <div class="row"><span class="k">卖出数量</span><span class="v">${fmtQty(s.sellQty)}</span></div>
+            <div class="row"><span class="k">卖出比例</span><span class="v">${fmtPct(s.sellPct)}</span></div>
+            <div class="row"><span class="k">收回金额</span><span class="v">${fmtMoney(s.recoverAmount)}</span></div>
+            <div class="row"><span class="k">其中成本</span><span class="v">${fmtMoney(s.costRecovered)}</span></div>
+            <div class="row"><span class="k">其中利润</span><span class="v">${fmtMoney(s.profitRecovered)}</span></div>
+            <div class="row"><span class="k">剩余数量</span><span class="v">${fmtQty(s.remainQty)}</span></div>
+            <div class="row"><span class="k">剩余持仓价值</span><span class="v">${fmtMoney(s.remainVal)}</span></div>
+          </div>
+        </div>`;
+    });
+
+    card.innerHTML = `
+      <div class="history-card-top">
+        <span class="date">${record.date}</span>
+        <button class="btn-delete-record" onclick="event.stopPropagation();deleteHistory(${record.id})">✕</button>
+      </div>
+      <div class="history-card-summary">
+        <div class="item"><span class="k">买入价</span><span class="v">${fmtPrice(record.buyPrice)}</span></div>
+        <div class="item"><span class="k">买入数量</span><span class="v">${fmtQty(record.buyQty)}</span></div>
+        <div class="item"><span class="k">止盈价</span><span class="v">${fmtPrice(record.sellPrice)}</span></div>
+        <div class="item"><span class="k">总成本</span><span class="v">${fmtMoney(record.totalCost)}</span></div>
+        <div class="item"><span class="k">总利润</span><span class="v" style="color:var(--profit)">${fmtMoney(record.totalProfit)}</span></div>
+        <div class="item"><span class="k">利润率</span><span class="v" style="color:var(--profit)">${fmtPct(record.profitRate)}</span></div>
+      </div>
+      <div class="history-detail">
+        ${detailHtml}
+        <button class="btn-reload" onclick="event.stopPropagation();reloadRecord(${record.id})">🔄 重新加载到计算器</button>
+      </div>`;
+
+    card.addEventListener('click', function() {
+      // Toggle active state
+      const wasActive = this.classList.contains('active');
+      listEl.querySelectorAll('.history-card.active').forEach(el => el.classList.remove('active'));
+      if (!wasActive) this.classList.add('active');
+    });
+
+    listEl.appendChild(card);
+  });
+}
+
+function reloadRecord(id) {
+  const record = getHistory().find(r => r.id === id);
+  if (!record) return;
+  document.getElementById('buyPrice').value = record.buyPrice;
+  document.getElementById('buyQty').value = record.buyQty;
+  document.getElementById('sellPrice').value = record.sellPrice;
+  calculate();
+  // Scroll to top on mobile
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* Mobile history toggle */
+let historyVisible = false;
+function toggleHistory() {
+  const content = document.getElementById('historyContent');
+  historyVisible = !historyVisible;
+  if (historyVisible) {
+    content.classList.remove('history-panel-mobile-hide');
+    content.classList.add('history-panel-mobile-show');
+  } else {
+    content.classList.add('history-panel-mobile-hide');
+    content.classList.remove('history-panel-mobile-show');
+  }
+}
+
+/* Initialize */
+function initHistory() {
+  // On mobile, hide history content by default
+  if (window.innerWidth < 768) {
+    document.getElementById('historyContent').classList.add('history-panel-mobile-hide');
+  }
+  renderHistory();
+}
+initHistory();
 </script>
 </body>
 </html>
